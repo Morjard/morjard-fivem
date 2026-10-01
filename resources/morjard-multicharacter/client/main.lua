@@ -409,11 +409,12 @@ function OpenCharacterSelection()
         if not data then data = { maxSlots = Config.DefaultSlots or 4, characters = {} } end
 
         SendNUIMessage({
-            action             = 'open',
-            maxSlots           = data.maxSlots,
-            characters         = data.characters,
-            spawnLocations     = data.spawnLocations,
-            enableLastLocation = data.enableLastLocation,
+            action                  = 'open',
+            maxSlots                = data.maxSlots,
+            characters              = data.characters,
+            spawnLocations          = data.spawnLocations,
+            enableLastLocation      = data.enableLastLocation,
+            useExternalSpawnSelector = Config.UseSpawnSelector,
         })
         SetNuiFocus(true, true)
 
@@ -811,6 +812,23 @@ RegisterNUICallback('selectCharacter', function(data, cb)
         citizenid = data.citizenid,
         spawnLocation = data.spawnLocation or nil,
     })
+
+    -- Integration: if configured to defer spawn-location picking to the standalone
+    -- morjard-spawn-selector resource (see Config.UseSpawnSelector in config.lua), the NUI
+    -- skipped its own internal spawn modal (data.spawnLocation is nil in that case) and the
+    -- character just loaded with QBCore's normal default spawn. Once the player has fully
+    -- loaded in, hand off to spawn-selector so they can reposition. One-shot handler so it
+    -- only fires for this particular character load, not every future OnPlayerLoaded.
+    if Config.UseSpawnSelector and not data.spawnLocation then
+        -- QBCore:Client:OnPlayerLoaded is already a net event registered by qb-core itself;
+        -- we only need to add a (one-shot) handler to it, not re-register the event name.
+        local handlerRef
+        handlerRef = AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
+            RemoveEventHandler(handlerRef)
+            TriggerEvent('morjard-spawnselector:open')
+        end)
+    end
+
     cb({ ok = true })
 end)
 

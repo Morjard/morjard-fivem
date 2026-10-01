@@ -23,6 +23,14 @@ Config.CamRot = vector3(-2.0, 0.0, 357.10)
 -- Default slots for all players
 Config.DefaultSlots = 4
 
+-- When true, skip this resource's own built-in spawn-location modal and defer to the
+-- standalone morjard-spawn-selector resource instead (opened once QBCore:Client:OnPlayerLoaded
+-- fires, i.e. after the character has fully loaded). Off by default: flip to true only after
+-- you've verified morjard-spawn-selector is active (`ensure morjard-spawn-selector` in
+-- server.cfg) and tested the full character->spawn flow in-game yourself. See
+-- docs/FINDING_spawn_selector_integration.md in the morjard-fivem repo for why this exists.
+Config.UseSpawnSelector = false
+
 -- VIP slot overrides and Tebex integration are in server/vip_config.lua
 -- (server-only to prevent license hash exposure to clients)
 

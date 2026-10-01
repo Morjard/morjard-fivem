@@ -4,6 +4,7 @@
 
 let characters = [];
 let maxSlots = 4;
+let useExternalSpawnSelector = false; // set from Lua's Config.UseSpawnSelector via the 'open' message
 let selectedSlot = -1;
 let selectedChar = null;
 let createSlotCid = 1;
@@ -42,6 +43,7 @@ window.addEventListener('message', (e) => {
             if (data.spawnLocations) {
                 setSpawnLocations(data.spawnLocations, data.enableLastLocation);
             }
+            useExternalSpawnSelector = !!data.useExternalSpawnSelector;
             openUI();
             break;
 
@@ -266,6 +268,12 @@ function showCharInfo(char) {
 
 document.getElementById('btnPlay').addEventListener('click', () => {
     if (!selectedChar) return;
+    if (useExternalSpawnSelector) {
+        // Skip this resource's own spawn modal entirely -- morjard-spawn-selector will
+        // open once the character has loaded (see client/main.lua selectCharacter handler).
+        fetchNui('selectCharacter', { citizenid: selectedChar.citizenid, spawnLocation: null });
+        return;
+    }
     openSpawnSelector();
 });
 
