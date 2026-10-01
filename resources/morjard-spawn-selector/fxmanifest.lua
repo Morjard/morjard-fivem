@@ -7,6 +7,12 @@ version '1.0.0'
 
 lua54 'yes'
 
+-- Both client/main.lua and server/main.lua call exports['qb-core']:GetCoreObject()
+-- unprotected on their very first line -- this makes FXServer actually wait for
+-- qb-core to start first instead of relying on server.cfg ensure order (found
+-- 2026-10-01: it happened to work only because `ensure qb-core` is placed before
+-- every category ensure in server.cfg, an unenforced convention).
+dependency 'qb-core'
 dependency 'morjard-settings'
 
 shared_scripts {
