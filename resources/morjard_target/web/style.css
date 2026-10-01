@@ -1,0 +1,180 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
+
+:root {
+  --border-radius: 8px;
+  --option-height: 30px;
+
+  --primary-color: #00d4aa;
+  --primary-glow: rgba(0, 212, 170, 0.4);
+  --bg-color: rgba(10, 14, 23, 0.92);
+  --bg-hover: rgba(0, 212, 170, 0.15);
+  --text-color: #f8fafc;
+  --text-secondary: #9ca3af;
+  --border-color: rgba(0, 212, 170, 0.25);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="red"] {
+  --primary-color: #f87171;
+  --primary-glow: rgba(248, 113, 113, 0.4);
+  --bg-color: rgba(40, 10, 10, 0.9);
+  --bg-hover: rgba(127, 29, 29, 0.8);
+  --text-color: #fef2f2;
+  --text-secondary: #fca5a5;
+  --border-color: rgba(248, 113, 113, 0.2);
+}
+
+body[data-theme="green"] {
+  --primary-color: #4ade80;
+  --primary-glow: rgba(74, 222, 128, 0.4);
+  --bg-color: rgba(6, 40, 20, 0.9);
+  --bg-hover: rgba(20, 83, 45, 0.8);
+  --text-color: #f0fdf4;
+  --text-secondary: #86efac;
+  --border-color: rgba(74, 222, 128, 0.2);
+}
+
+body[data-theme="purple"] {
+  --primary-color: #c084fc;
+  --primary-glow: rgba(192, 132, 252, 0.4);
+  --bg-color: rgba(30, 10, 50, 0.9);
+  --bg-hover: rgba(88, 28, 135, 0.8);
+  --text-color: #faf5ff;
+  --text-secondary: #d8b4fe;
+  --border-color: rgba(192, 132, 252, 0.2);
+}
+
+body[data-theme="orange"] {
+  --primary-color: #fb923c;
+  --primary-glow: rgba(251, 146, 60, 0.4);
+  --bg-color: rgba(40, 20, 10, 0.9);
+  --bg-hover: rgba(124, 45, 18, 0.8);
+  --text-color: #fff7ed;
+  --text-secondary: #fdba74;
+  --border-color: rgba(251, 146, 60, 0.2);
+}
+
+body[data-theme="pink"] {
+  --primary-color: #f472b6;
+  --primary-glow: rgba(244, 114, 182, 0.4);
+  --bg-color: rgba(40, 10, 30, 0.9);
+  --bg-hover: rgba(131, 24, 67, 0.8);
+  --text-color: #fdf2f8;
+  --text-secondary: #f9a8d4;
+  --border-color: rgba(244, 114, 182, 0.2);
+}
+
+body {
+  visibility: hidden;
+  margin: 0;
+  user-select: none;
+  overflow: hidden;
+  font-family: "JetBrains Mono", "Nunito", sans-serif;
+  height: 100vh;
+  width: 100vw;
+}
+
+#hand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1.5px solid var(--border-color);
+}
+
+#hand i {
+  font-size: 20px;
+  color: var(--text-color);
+  transition: color 0.2s ease;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+.hand-hover {
+  border-color: var(--primary-color);
+  transform: scale(1.15) !important;
+}
+
+.hand-hover i {
+  color: #fff !important;
+  transform: scale(1.1);
+}
+
+#options-wrapper {
+  position: absolute;
+  top: 50%;
+  left: calc(50% + 50px);
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 5;
+  margin-left: 10px;
+}
+
+.option-container {
+  display: flex;
+  align-items: center;
+  background: var(--bg-color);
+  color: var(--text-color);
+  padding: 0 10px;
+  height: var(--option-height);
+  min-width: 140px;
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--primary-color);
+
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  animation: slideIn 0.3s forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.option-container:hover {
+  background: var(--bg-hover);
+}
+
+.option-icon {
+  font-size: 14px;
+  width: 22px;
+  margin-right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+}
+
+.option-container:hover .option-icon {
+  color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.option-label {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}

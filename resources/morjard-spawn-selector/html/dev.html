@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morjard Spawn Selector — DEV PREVIEW</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* DEV ONLY: simulate game background */
+        html, body {
+            background: #0a0908 !important;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse at 30% 60%, rgba(40,60,30,0.3) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 40%, rgba(30,40,60,0.2) 0%, transparent 50%),
+                linear-gradient(180deg, #0a0908 0%, #12100e 50%, #0a0908 100%);
+        }
+        /* DEV overlay banner */
+        .dev-banner {
+            position: fixed;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            color: #F97316;
+            background: rgba(6,5,4,0.9);
+            border: 1px solid rgba(249,115,22,0.3);
+            padding: 4px 16px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dev-banner">DEV PREVIEW — NOT IN GAME</div>
+
+    <!-- AMBIENT EFFECTS -->
+    <div class="grid-bg"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="particle" style="top:15%;left:10%;animation-delay:0s"></div>
+    <div class="particle" style="top:45%;left:85%;animation-delay:1.5s"></div>
+    <div class="particle" style="top:70%;left:25%;animation-delay:3s"></div>
+    <div class="particle" style="top:30%;left:65%;animation-delay:4.5s"></div>
+    <div class="particle" style="top:80%;left:50%;animation-delay:2s"></div>
+
+    <!-- VIGNETTE -->
+    <div class="vignette"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="spawn-selector hidden" id="spawnSelector">
+
+        <!-- TOP BAR -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="logo-icon">
+                    <i class="fas fa-fire"></i>
+                    <div class="logo-ring"></div>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-main">MOR<span class="hi">JARD</span></span>
+                    <span class="logo-sub">SPAWN SELECTOR</span>
+                </div>
+            </div>
+            <div class="topbar-center">
+                <div class="selected-indicator">
+                    <div class="pulse-dot"></div>
+                    <span class="selected-name" id="selectedName">SELECT LOCATION</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="category-filter">
+                    <div class="cat-btn active" data-cat="all" title="All">
+                        <i class="fas fa-th"></i>
+                    </div>
+                    <div class="cat-btn" data-cat="last" title="Last Location">
+                        <i class="fas fa-clock-rotate-left"></i>
+                    </div>
+                    <div class="cat-btn" data-cat="property" title="Properties">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="cat-btn" data-cat="default" title="Default Spawns">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PINS AREA -->
+        <div class="map-area">
+            <div class="map-pins" id="mapPins"></div>
+
+            <!-- LOCATION INFO (bottom-left) -->
+            <div class="location-info" id="locationInfo">
+                <div class="info-icon">
+                    <i class="fas fa-map-pin" id="infoIcon"></i>
+                </div>
+                <div class="info-text">
+                    <span class="info-name" id="infoName">SELECT A LOCATION</span>
+                    <span class="info-desc" id="infoDesc">Click a pin or card to preview</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">LOCATIONS</span>
+                <span class="sidebar-count" id="locCount">0</span>
+            </div>
+
+            <div class="sidebar-scroll" id="locationList"></div>
+
+            <div class="sidebar-actions">
+                <button class="btn-secondary" id="btnLastLocation">
+                    <i class="fas fa-clock-rotate-left"></i> LAST LOCATION
+                </button>
+                <button class="btn-ember disabled" id="btnSpawn">
+                    <i class="fas fa-bolt"></i>
+                    <span id="btnSpawnText">SPAWN</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // ============================================================
+        // DEV MOCK DATA — simulates NUI message from FiveM client
+        // ============================================================
+
+        var mockLocations = [
+            {
+                id: 'last_location',
+                name: 'LAST LOCATION',
+                description: 'Return to where you left off',
+                category: 'last',
+                icon: 'clock-rotate-left',
+                cssTop: '55%',
+                cssLeft: '48%',
+            },
+            {
+                id: 'legion',
+                name: 'LEGION SQUARE',
+                description: 'Central downtown Los Santos',
+                category: 'default',
+                icon: 'city',
+                cssTop: '60%',
+                cssLeft: '47%',
+            },
+            {
+                id: 'hospital',
+                name: 'PILLBOX HOSPITAL',
+                description: 'Los Santos medical center',
+                category: 'default',
+                icon: 'hospital',
+                cssTop: '57%',
+                cssLeft: '48%',
+            },
+            {
+                id: 'police',
+                name: 'MISSION ROW PD',
+                description: 'Los Santos police department',
+                category: 'default',
+                icon: 'shield-halved',
+                cssTop: '61%',
+                cssLeft: '49%',
+            },
+            {
+                id: 'parking',
+                name: 'PARKING GARAGE',
+                description: 'Multi-level parking structure',
+                category: 'default',
+                icon: 'square-parking',
+                cssTop: '58%',
+                cssLeft: '47%',
+            },
+            {
+                id: 'paleto',
+                name: 'PALETO BAY',
+                description: 'Quiet coastal town up north',
+                category: 'default',
+                icon: 'water',
+                cssTop: '14%',
+                cssLeft: '42%',
+            },
+            {
+                id: 'beach',
+                name: 'VESPUCCI BEACH',
+                description: 'Sun, sand, and ocean breeze',
+                category: 'default',
+                icon: 'umbrella-beach',
+                cssTop: '64%',
+                cssLeft: '37%',
+            },
+            {
+                id: 'airport',
+                name: 'LS AIRPORT',
+                description: 'Los Santos International Airport',
+                category: 'default',
+                icon: 'plane',
+                cssTop: '75%',
+                cssLeft: '40%',
+            },
+            {
+                id: 'sandy',
+                name: 'SANDY SHORES',
+                description: 'Desert town in Blaine County',
+                category: 'default',
+                icon: 'sun',
+                cssTop: '28%',
+                cssLeft: '62%',
+            },
+            {
+                id: 'apartment_1',
+                name: 'ALTA ST APARTMENT',
+                description: 'Your luxury apartment',
+                category: 'property',
+                icon: 'building',
+                cssTop: '56%',
+                cssLeft: '49%',
+            },
+            {
+                id: 'garage_1',
+                name: 'PILLBOX GARAGE',
+                description: 'Your 10-car garage',
+                category: 'property',
+                icon: 'warehouse',
+                cssTop: '58%',
+                cssLeft: '48%',
+            },
+        ];
+
+        // Send mock NUI message after a short delay (simulates game trigger)
+        setTimeout(function () {
+            window.postMessage({
+                action: 'showSpawnSelector',
+                locations: mockLocations,
+                enableLastLocation: true,
+            }, '*');
+        }, 500);
+
+        // Intercept NUI posts in dev mode and log them
+        var originalFetch = window.fetch;
+        window.fetch = function (url, options) {
+            if (typeof url === 'string' && url.startsWith('https://morjard-spawn-selector/')) {
+                var endpoint = url.replace('https://morjard-spawn-selector/', '');
+                var body = options && options.body ? JSON.parse(options.body) : {};
+                console.log('[DEV] NUI Callback:', endpoint, body);
+
+                // Simulate hiding after spawn
+                if (endpoint === 'spawn' || endpoint === 'lastLocation') {
+                    console.log('[DEV] Would spawn at:', body.location || 'last location');
+                    setTimeout(function () {
+                        window.postMessage({ action: 'hideSpawnSelector' }, '*');
+                    }, 300);
+                    // Re-show after 2s for dev testing
+                    setTimeout(function () {
+                        window.postMessage({
+                            action: 'showSpawnSelector',
+                            locations: mockLocations,
+                            enableLastLocation: true,
+                        }, '*');
+                    }, 2500);
+                }
+
+                if (endpoint === 'previewLocation') {
+                    console.log('[DEV] Camera preview:', body.location);
+                }
+
+                return Promise.resolve(new Response('ok'));
+            }
+            return originalFetch.apply(this, arguments);
+        };
+    </script>
+</body>
+</html>

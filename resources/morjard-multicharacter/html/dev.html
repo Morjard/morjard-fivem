@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#111!important">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morjard Multicharacter — DEV PREVIEW</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=8">
+    <style>
+        /* DEV ONLY: GTA screenshot as background to simulate game world */
+        html { background: #060504 !important; }
+        body {
+            width: 100vw !important;
+            height: 100vh !important;
+            min-width: 100vw !important;
+            min-height: 100vh !important;
+            overflow: hidden !important;
+            background: #00ff00 !important;
+        }
+        /* DEV indicator */
+        .dev-badge {
+            position: fixed; top: 8px; left: 50%; transform: translateX(-50%);
+            background: rgba(249,115,22,0.15); border: 1px solid rgba(249,115,22,0.4);
+            color: #F97316; font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; padding: 4px 14px;
+            z-index: 99999; letter-spacing: 2px; pointer-events: none;
+            clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="dev-badge">DEV PREVIEW — NOT IN-GAME</div>
+
+<!-- ========== AMBIENT EFFECTS ========== -->
+<div class="grid-bg"></div>
+<div class="glow-orb orb-1"></div>
+<div class="glow-orb orb-2"></div>
+<div class="glow-orb orb-3"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+
+<!-- ========== MAIN CONTAINER ========== -->
+<div id="multichar" class="multichar hidden">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="logo-icon">
+                <i class="fas fa-fire"></i>
+                <div class="logo-ring"></div>
+            </div>
+            <div class="logo-text">
+                <span class="logo-main">MOR<span class="hi">JARD</span></span>
+                <span class="logo-sub">CHARACTER SYSTEM</span>
+            </div>
+        </div>
+        <div class="topbar-center">
+            <div class="char-name-wrap">
+                <div class="pulse-dot"></div>
+                <span class="char-name" id="charName">SELECT CHARACTER</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button class="btn-disconnect" id="btnDisconnect">
+                <i class="fas fa-power-off"></i>
+                <span>DISCONNECT</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- INFO PANEL (right side) -->
+    <div class="info-panel" id="infoPanel">
+        <div class="wc tl"></div><div class="wc tr"></div>
+        <div class="wc bl"></div><div class="wc br"></div>
+        <div class="scanline-overlay"></div>
+
+        <!-- Empty state -->
+        <div class="info-empty" id="infoEmpty">
+            <i class="fas fa-user-plus"></i>
+            <span>Select a character slot</span>
+        </div>
+
+        <!-- Character info -->
+        <div class="info-content hidden" id="infoContent">
+            <div class="info-header">
+                <div class="info-cid" id="infoCid">CITIZEN-00000</div>
+                <div class="info-status"><div class="status-dot"></div>ACTIVE</div>
+            </div>
+
+            <div class="info-divider">
+                <div class="div-line"></div>
+                <span>IDENTITY</span>
+                <div class="div-line"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-user"></i> NAME</div>
+                <div class="info-value" id="infoName">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-calendar"></i> DOB</div>
+                <div class="info-value" id="infoDob">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-venus-mars"></i> GENDER</div>
+                <div class="info-value" id="infoGender">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-globe"></i> NATIONALITY</div>
+                <div class="info-value" id="infoNationality">—</div>
+            </div>
+
+            <div class="info-divider">
+                <div class="div-line"></div>
+                <span>STATUS</span>
+                <div class="div-line"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-briefcase"></i> JOB</div>
+                <div class="info-value" id="infoJob">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-wallet"></i> CASH</div>
+                <div class="info-value mono" id="infoCash">$0</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="fas fa-university"></i> BANK</div>
+                <div class="info-value mono" id="infoBank">$0</div>
+            </div>
+
+            <div class="info-actions">
+                <button class="btn-play" id="btnPlay">
+                    <i class="fas fa-play"></i>
+                    <span>PLAY</span>
+                </button>
+                <button class="btn-delete" id="btnDelete">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SERVER INFO (bottom left) -->
+    <div class="server-info">
+        <div class="server-info-line">
+            <i class="fas fa-server"></i>
+            <span>MORJARD <span class="accent">ROLEPLAY</span></span>
+        </div>
+        <div class="server-info-line">
+            <i class="fas fa-signal"></i>
+            <span>v2.0 // <span class="accent">ONLINE</span></span>
+        </div>
+    </div>
+
+    <!-- BOTTOM BAR + CAROUSEL -->
+    <div class="carousel-wrap"></div>
+    <div class="carousel" id="carousel">
+        <!-- Slots generated by JS -->
+    </div>
+    <div class="bot-version">MORJARD // MULTICHAR v2.0</div>
+
+</div>
+
+<!-- ========== CREATE CHARACTER MODAL ========== -->
+<div class="modal-overlay hidden" id="createModal">
+    <div class="modal-box">
+        <div class="wc tl"></div><div class="wc tr"></div>
+        <div class="wc bl"></div><div class="wc br"></div>
+        <div class="scanline-overlay"></div>
+
+        <div class="modal-header">
+            <i class="fas fa-user-plus"></i>
+            <span>NEW CHARACTER</span>
+        </div>
+
+        <div class="modal-body">
+            <div class="form-row two-col">
+                <div class="form-group">
+                    <label>FIRST NAME</label>
+                    <input type="text" id="inputFirstname" placeholder="John" maxlength="30" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>LAST NAME</label>
+                    <input type="text" id="inputLastname" placeholder="Doe" maxlength="30" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-row two-col">
+                <div class="form-group">
+                    <label>DATE OF BIRTH</label>
+                    <input type="date" id="inputDob" value="1990-01-01">
+                </div>
+                <div class="form-group">
+                    <label>NATIONALITY</label>
+                    <select id="inputNationality">
+                        <option value="Czech Republic" selected>Czech Republic</option>
+                        <option value="Slovakia">Slovakia</option>
+                        <option value="Poland">Poland</option>
+                        <option value="Germany">Germany</option>
+                        <option value="Austria">Austria</option>
+                        <option value="Hungary">Hungary</option>
+                        <option value="Ukraine">Ukraine</option>
+                        <option value="Russia">Russia</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="United States">United States</option>
+                        <option value="France">France</option>
+                        <option value="Italy">Italy</option>
+                        <option value="Spain">Spain</option>
+                        <option value="Netherlands">Netherlands</option>
+                        <option value="Belgium">Belgium</option>
+                        <option value="Sweden">Sweden</option>
+                        <option value="Norway">Norway</option>
+                        <option value="Denmark">Denmark</option>
+                        <option value="Finland">Finland</option>
+                        <option value="Romania">Romania</option>
+                        <option value="Bulgaria">Bulgaria</option>
+                        <option value="Croatia">Croatia</option>
+                        <option value="Serbia">Serbia</option>
+                        <option value="Slovenia">Slovenia</option>
+                        <option value="Albania">Albania</option>
+                        <option value="Greece">Greece</option>
+                        <option value="Turkey">Turkey</option>
+                        <option value="Canada">Canada</option>
+                        <option value="Mexico">Mexico</option>
+                        <option value="Brazil">Brazil</option>
+                        <option value="Argentina">Argentina</option>
+                        <option value="Colombia">Colombia</option>
+                        <option value="Japan">Japan</option>
+                        <option value="South Korea">South Korea</option>
+                        <option value="China">China</option>
+                        <option value="India">India</option>
+                        <option value="Australia">Australia</option>
+                        <option value="South Africa">South Africa</option>
+                        <option value="Nigeria">Nigeria</option>
+                        <option value="Egypt">Egypt</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group gender-group">
+                    <label>GENDER</label>
+                    <div class="gender-buttons">
+                        <button class="gender-btn active" data-gender="0" id="genderMale">
+                            <i class="fas fa-mars"></i>
+                            <span>MALE</span>
+                        </button>
+                        <button class="gender-btn" data-gender="1" id="genderFemale">
+                            <i class="fas fa-venus"></i>
+                            <span>FEMALE</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-cancel" id="btnCancelCreate">CANCEL</button>
+            <button class="btn-confirm" id="btnConfirmCreate">
+                <i class="fas fa-check"></i> CREATE
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== DELETE CONFIRMATION MODAL ========== -->
+<div class="modal-overlay hidden" id="deleteModal">
+    <div class="modal-box modal-danger">
+        <div class="wc tl"></div><div class="wc tr"></div>
+        <div class="wc bl"></div><div class="wc br"></div>
+
+        <div class="modal-header danger">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>DELETE CHARACTER</span>
+        </div>
+
+        <div class="modal-body">
+            <p class="delete-warning">This action is <strong>permanent</strong> and cannot be undone. Type the character's full name to confirm.</p>
+            <div class="delete-name" id="deleteCharName">JOHN DOE</div>
+            <div class="form-group">
+                <input type="text" id="inputDeleteConfirm" placeholder="Type full name..." autocomplete="off">
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-cancel" id="btnCancelDelete">CANCEL</button>
+            <button class="btn-danger disabled" id="btnConfirmDelete">
+                <i class="fas fa-trash-alt"></i> DELETE
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SPAWN LOCATION SELECTOR ========== -->
+<div class="hidden" id="spawnModal">
+    <div class="spawn-container">
+        <div class="wc tl"></div><div class="wc tr"></div>
+        <div class="wc bl"></div><div class="wc br"></div>
+
+        <div class="spawn-map">
+            <div class="spawn-map-inner" id="spawnMap">
+                <!-- Pins generated by JS -->
+            </div>
+        </div>
+
+        <div class="spawn-header">
+            <i class="fas fa-map-location-dot"></i>
+            <span>SELECT SPAWN LOCATION</span>
+        </div>
+
+        <div class="spawn-body"></div>
+
+        <div class="spawn-location-info" id="spawnLocationInfo">
+            <div class="spawn-location-icon"><i class="fas fa-crosshairs"></i></div>
+            <div class="spawn-location-name" id="spawnLocationName">SELECT A LOCATION</div>
+        </div>
+
+        <div class="spawn-footer">
+            <button class="btn-last-location" id="btnLastLocation">
+                <i class="fas fa-history"></i>
+                <span>LAST LOCATION</span>
+            </button>
+            <button class="btn-spawn disabled" id="btnSpawn">
+                <i class="fas fa-play"></i>
+                <span>SPAWN</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js?v=3"></script>
+<script>
+// ============================================================
+// DEV MOCK — simulate NUI open with sample characters
+// ============================================================
+
+// Override fetchNui to prevent network errors in browser
+async function fetchNui(event, data = {}) {
+    console.log('[DEV] fetchNui:', event, data);
+    return { ok: true };
+}
+
+// Mock character data
+const mockCharacters = [
+    {
+        citizenid: 'MRJ-38291',
+        cid: 1,
+        charinfo: {
+            firstname: 'Tomas',
+            lastname: 'Novak',
+            birthdate: '1995-03-15',
+            gender: 0,
+            nationality: 'Czech Republic'
+        },
+        money: { cash: 15420, bank: 892350 },
+        job: { label: 'Police Officer' }
+    },
+    {
+        citizenid: 'MRJ-49102',
+        cid: 2,
+        charinfo: {
+            firstname: 'Eva',
+            lastname: 'Svobodova',
+            birthdate: '1998-07-22',
+            gender: 1,
+            nationality: 'Czech Republic'
+        },
+        money: { cash: 3200, bank: 45800 },
+        job: { label: 'EMS Medic' }
+    },
+    {
+        citizenid: 'MRJ-55478',
+        cid: 4,
+        charinfo: {
+            firstname: 'Viktor',
+            lastname: 'Cerny',
+            birthdate: '1988-11-05',
+            gender: 0,
+            nationality: 'Slovakia'
+        },
+        money: { cash: 89100, bank: 1250000 },
+        job: { label: 'Mechanic' }
+    }
+];
+
+// Mock spawn locations
+// Pin positions calibrated for map.jpg (2000x1003 dark landscape)
+// Formula: mapX = pixel_x / 2000 * 100, mapY = pixel_y / 1003 * 100
+const mockSpawnLocations = [
+    { id: 'legion',   label: 'Legion Square',    icon: 'fa-city',          mapX: 18.2, mapY: 30.9 },
+    { id: 'hospital', label: 'Pillbox Hospital', icon: 'fa-hospital',      mapX: 20.2, mapY: 34.9 },
+    { id: 'police',   label: 'Mission Row PD',   icon: 'fa-shield-halved', mapX: 22.5, mapY: 37.0 },
+    { id: 'airport',  label: 'LS Airport',        icon: 'fa-plane',         mapX: 11.0, mapY: 56.3 },
+    { id: 'paleto',   label: 'Paleto Bay',        icon: 'fa-water',         mapX: 78.0, mapY:  8.5 },
+];
+
+// Auto-open after 500ms
+setTimeout(() => {
+    window.postMessage({
+        action: 'open',
+        maxSlots: 4,
+        characters: mockCharacters,
+        spawnLocations: mockSpawnLocations,
+        enableLastLocation: true,
+    }, '*');
+}, 500);
+
+// Simulate headshot photos after 1s (in-game these come from RegisterPedheadshot)
+setTimeout(() => {
+    // Use placeholder headshot images for dev preview — warm ember tones
+    const placeholders = [
+        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="%230F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="%23F97316" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="%23F97316" opacity="0.2"/></svg>'),
+        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="%230F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="%23FBBF24" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="%23FBBF24" opacity="0.2"/></svg>'),
+        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="%230F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="%23EF4444" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="%23EF4444" opacity="0.2"/></svg>'),
+    ];
+    mockCharacters.forEach((ch, i) => {
+        window.postMessage({
+            action: 'updateHeadshot',
+            citizenid: ch.citizenid,
+            headshotUrl: placeholders[i % placeholders.length],
+        }, '*');
+    });
+}, 1200);
+
+</script>
+</body>
+</html>

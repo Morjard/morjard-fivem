@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en" style="background:transparent">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morjard Weather</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- PLAYER WIDGET -->
+<div id="weatherWidget" class="weather-widget hidden">
+    <div class="wc tl"></div><div class="wc tr"></div>
+    <div class="wc bl"></div><div class="wc br"></div>
+
+    <div class="widget-top">
+        <div class="widget-icon-wrap">
+            <i class="fas fa-sun" id="weatherIcon"></i>
+            <div class="icon-ring"></div>
+        </div>
+        <div class="widget-main-info">
+            <div class="widget-zone" id="zoneName">LOS SANTOS</div>
+            <div class="widget-weather-label" id="weatherStatus">Clear Sky</div>
+        </div>
+        <div class="widget-temp-block">
+            <div class="temp-value"><span id="temperature">25</span><span class="temp-deg">°C</span></div>
+            <div class="temp-bar-wrap"><div class="temp-bar" id="tempBar" style="width:60%"></div></div>
+            <div class="temp-feel" id="tempFeel">PLEASANT</div>
+        </div>
+    </div>
+
+    <div class="widget-divider">
+        <div class="div-line"></div>
+        <span id="lblEnvData">ENV DATA</span>
+        <div class="div-line"></div>
+    </div>
+
+    <div class="widget-stats">
+        <div class="wstat" id="windContainer">
+            <i class="fas fa-wind"></i>
+            <div>
+                <div class="wstat-val"><span id="windSpeed">0</span> km/h</div>
+                <div class="wstat-lbl" id="lblWind">WIND</div>
+            </div>
+        </div>
+        <div class="wstat-sep"></div>
+        <div class="wstat" id="timeContainer">
+            <i class="fas fa-clock"></i>
+            <div>
+                <div class="wstat-val" id="time">12:00</div>
+                <div class="wstat-lbl" id="lblTime">TIME</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="widget-alert hidden" id="widgetAlert">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span id="widgetAlertText">WARNING</span>
+    </div>
+</div>
+
+<!-- ADMIN MENU -->
+<div id="weatherMenu" class="weather-menu hidden">
+    <div class="menu-panel">
+
+        <div class="panel-header">
+            <div class="header-logo">
+                <div class="logo-icon"><i class="fas fa-satellite-dish"></i></div>
+                <div>
+                    <div class="logo-title">Morjard WEATHER</div>
+                    <div class="logo-sub">ENVIRONMENTAL CONTROL SYSTEM v2.0</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="header-status">
+                    <div class="status-dot"></div>
+                    <span id="lblLiveSync">LIVE SYNC</span>
+                </div>
+                <button class="close-btn" id="closeMenuBtn"><i class="fas fa-xmark"></i></button>
+            </div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="weather"><i class="fas fa-cloud-sun"></i> <span id="tabWeather">WEATHER</span></button>
+            <button class="tab-btn" data-tab="time"><i class="fas fa-clock"></i> <span id="tabTime">TIME</span></button>
+            <button class="tab-btn" data-tab="events"><i class="fas fa-bolt"></i> <span id="tabEvents">EVENTS</span> <span class="tab-badge hidden" id="activeEventBadge">!</span></button>
+            <button class="tab-btn" data-tab="realtime"><i class="fas fa-globe"></i> <span id="tabRealtime">REAL-TIME</span></button>
+        </div>
+
+        <!-- WEATHER TAB -->
+        <div class="tab-content active" id="tab-weather">
+            <div class="two-col">
+                <div class="col-panel">
+                    <div class="col-header"><i class="fas fa-map-marked-alt"></i> <span id="lblZones">ZONES</span></div>
+                    <div id="zoneGrid" class="zone-list"></div>
+                </div>
+                <div class="col-panel">
+                    <div class="col-header"><i class="fas fa-cloud-rain"></i> <span id="lblWeatherType">WEATHER TYPE</span></div>
+                    <div id="weatherGrid" class="weather-grid-inner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIME TAB -->
+        <div class="tab-content" id="tab-time">
+            <div class="time-section">
+                <div class="time-clock-wrap">
+                    <div class="clock-ring"></div>
+                    <div class="clock-inner">
+                        <div class="clock-label" id="lblGameTime">GAME TIME</div>
+                        <div class="clock-time" id="currentTimeDisplay">12:00</div>
+                        <div class="clock-sub" id="timeOfDayLabel">NOON</div>
+                    </div>
+                </div>
+                <div class="slider-section">
+                    <div class="slider-track-container">
+                        <div class="slider-gradient-bar"></div>
+                        <input type="range" class="time-slider" id="timeSlider" min="0" max="1439" value="720" step="1">
+                        <div class="slider-icon" id="sliderIcon"><i class="fas fa-sun"></i></div>
+                    </div>
+                    <div class="time-markers">
+                        <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
+                    </div>
+                </div>
+                <div class="time-presets">
+                    <button class="preset-btn" data-time="0"><i class="fas fa-moon"></i> <span id="presetMidnight">Midnight</span></button>
+                    <button class="preset-btn" data-time="360"><i class="fas fa-sun"></i> <span id="presetDawn">Dawn</span></button>
+                    <button class="preset-btn" data-time="720"><i class="fas fa-sun"></i> <span id="presetNoon">Noon</span></button>
+                    <button class="preset-btn" data-time="1080"><i class="fas fa-cloud-sun"></i> <span id="presetSunset">Sunset</span></button>
+                    <button class="preset-btn" data-time="1200"><i class="fas fa-moon"></i> <span id="presetNight">Night</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EVENTS TAB -->
+        <div class="tab-content" id="tab-events">
+            <div class="events-intro">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span id="lblEventsIntro">Special natural and meteorological events. Effect applies to all players.</span>
+            </div>
+            <div class="events-grid" id="eventsGrid"></div>
+            <div class="active-events-bar">
+                <i class="fas fa-circle-dot pulse-icon"></i>
+                <span id="activeEventsText">No active event</span>
+            </div>
+        </div>
+
+        <!-- REALTIME TAB -->
+        <div class="tab-content" id="tab-realtime">
+            <div class="rt-section">
+                <div class="rt-toggle-row">
+                    <div>
+                        <div class="rt-title" id="lblRtTitle">REAL-TIME SYNC</div>
+                        <div class="rt-sub" id="lblRtSub">Game time matches real time based on selected timezone.</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="realTimeToggle">
+                        <span class="toggle-track"><span class="toggle-knob"></span></span>
+                    </label>
+                </div>
+                <div class="tz-search-wrap">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="tz-search" id="tzSearch" placeholder="Search timezone...">
+                </div>
+                <div class="timezone-grid" id="timezoneGrid"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- PLAYER TABLET UI -->
+<div id="playerTablet" class="player-tablet-overlay hidden">
+    <div class="player-tablet">
+
+        <!-- Horní fyzický rámeček -->
+        <div class="tablet-bezel-top">
+            <div class="tablet-camera"></div>
+            <div class="tablet-brand">Morjard · ENV-SYSTEM</div>
+            <div class="tablet-status-bar">
+                <div class="tablet-signal">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <span id="tabletStatusTime" class="ts-time">12:00</span>
+            </div>
+        </div>
+
+        <!-- Navigace — ikonky jako na tabletu -->
+        <div class="tablet-nav">
+            <button class="tablet-nav-btn active" data-ttab="overview">
+                <i class="fas fa-home"></i>
+                <span id="tnav_overview">PŘEHLED</span>
+            </button>
+            <button class="tablet-nav-btn" data-ttab="zones">
+                <i class="fas fa-map-marked-alt"></i>
+                <span id="tnav_zones">MAPA</span>
+            </button>
+            <button class="tablet-nav-btn" data-ttab="events">
+                <i class="fas fa-bolt"></i>
+                <span id="tnav_events">UDÁLOSTI</span>
+                <div class="tnav-badge hidden" id="tabletEventBadge">!</div>
+            </button>
+            <button class="tablet-nav-btn" data-ttab="settings">
+                <i class="fas fa-sliders"></i>
+                <span id="tnav_settings">NASTAVENÍ</span>
+            </button>
+        </div>
+
+        <!-- Obsah -->
+        <div class="tablet-content">
+
+            <!-- TAB: PŘEHLED -->
+            <div class="tablet-tab active" id="ttab-overview">
+
+                <!-- Hero sekce — aktuální počasí -->
+                <div class="tov-hero">
+                    <div class="tov-icon-wrap">
+                        <i class="fas fa-sun" id="tov-icon"></i>
+                    </div>
+                    <div class="tov-main">
+                        <div class="tov-zone" id="tov-zone">LOS SANTOS CITY</div>
+                        <div class="tov-weather-name" id="tov-weather">Clear Sky</div>
+                        <div class="tov-desc" id="tov-desc">Slunečno, bez srážek</div>
+                    </div>
+                    <div class="tov-temp-block">
+                        <div class="tov-temp"><span id="tov-temp">25</span><sup>°C</sup></div>
+                        <div class="tov-feel" id="tov-feel">PŘÍJEMNÉ</div>
+                    </div>
+                </div>
+
+                <!-- Stats řada -->
+                <div class="tov-stats">
+                    <div class="tov-stat">
+                        <i class="fas fa-wind"></i>
+                        <div class="tov-stat-val"><span id="tov-wind">5</span> km/h</div>
+                        <div class="tov-stat-lbl" id="tov-lbl-wind">VÍTR</div>
+                    </div>
+                    <div class="tov-stat">
+                        <i class="fas fa-clock"></i>
+                        <div class="tov-stat-val" id="tov-time">12:00</div>
+                        <div class="tov-stat-lbl" id="tov-lbl-time">ČAS</div>
+                    </div>
+                    <div class="tov-stat">
+                        <i class="fas fa-thermometer-half"></i>
+                        <div class="tov-stat-val"><span id="tov-temp2">25</span>°C</div>
+                        <div class="tov-stat-lbl" id="tov-lbl-temp">TEPLOTA</div>
+                    </div>
+                    <div class="tov-stat">
+                        <i class="fas fa-location-dot"></i>
+                        <div class="tov-stat-val" id="tov-zone-short">LS</div>
+                        <div class="tov-stat-lbl" id="tov-lbl-zone">ZÓNA</div>
+                    </div>
+                </div>
+
+                <!-- Aktivní event banner -->
+                <div class="tov-event-banner hidden" id="tov-event-banner">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <div>
+                        <div class="tov-event-title" id="tov-event-name">CUNAMI</div>
+                        <div class="tov-event-sub" id="tov-event-sub">Aktivní přírodní událost — buď opatrný!</div>
+                    </div>
+                </div>
+                <div class="tov-no-event" id="tov-no-event">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="tov-lbl-noEvent">Žádná aktivní událost</span>
+                </div>
+
+            </div>
+
+            <!-- TAB: MAPA POČASÍ (Zóny) -->
+            <div class="tablet-tab" id="ttab-zones">
+                <div class="tz-header" id="tz-hdr">PŘEHLED POČASÍ DLE ZÓN</div>
+                <div class="tz-zone-list" id="tzZoneList">
+                    <!-- dynamicky generováno JS -->
+                </div>
+            </div>
+
+            <!-- TAB: UDÁLOSTI -->
+            <div class="tablet-tab" id="ttab-events">
+                <div class="tevt-header">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span id="tevt-hdr">Přírodní a meteorologické události</span>
+                </div>
+
+                <!-- Aktivní event detail -->
+                <div class="tevt-active hidden" id="tevt-active-block">
+                    <div class="tevt-active-header">
+                        <div class="tevt-active-icon" id="tevt-active-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div>
+                            <div class="tevt-active-name" id="tevt-active-name">CUNAMI</div>
+                            <div class="tevt-active-tag" id="tevt-active-tag">AKTIVNÍ UDÁLOST</div>
+                        </div>
+                    </div>
+                    <div class="tevt-pulse-row">
+                        <div class="tevt-pulse-dot"></div>
+                        <span id="tevt-active-desc">Událost právě probíhá. Řiď se pokyny vedení serveru.</span>
+                    </div>
+                </div>
+
+                <!-- Žádná událost -->
+                <div class="tevt-no-event" id="tevt-no-event-block">
+                    <i class="fas fa-shield-halved"></i>
+                    <span id="tevt-lbl-noEvent">Žádná aktivní událost</span>
+                </div>
+            </div>
+
+            <!-- TAB: NASTAVENÍ -->
+            <div class="tablet-tab" id="ttab-settings">
+                <div class="tsett-section">
+                    <div class="tsett-title" id="tsett-display-title">ZOBRAZENÍ</div>
+
+                    <div class="tsett-row" id="tsett-widget-row">
+                        <div class="tsett-row-left">
+                            <div class="tsett-row-icon"><i class="fas fa-gauge-high"></i></div>
+                            <div>
+                                <div class="tsett-row-label" id="tsett-widget-label">Widget počasí</div>
+                                <div class="tsett-row-sub" id="tsett-widget-sub">Zobrazit/skrýt HUD v rohu obrazovky</div>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="tabletWidgetToggle" checked>
+                            <span class="toggle-track"><span class="toggle-knob"></span></span>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Spodní rámeček — home button -->
+        <div class="tablet-bezel-bottom">
+            <div class="tablet-home-btn" id="tabletCloseBtn" title="Zavřít tablet">
+                <i class="fas fa-square"></i>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

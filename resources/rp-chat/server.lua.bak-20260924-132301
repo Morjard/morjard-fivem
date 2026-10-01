@@ -1,0 +1,438 @@
+local cooldowns = {}
+local avatarCache = {} -- [serverId] = base64 data URL
+local lastPmSender = {} -- [targetSource] = source of the last /pm they received, for /r
+
+-- ============================================================
+-- AVATAR SYSTEM — DB-persistent headshot photos
+-- ============================================================
+
+-- Create DB table on resource start
+CreateThread(function()
+    MySQL.query([[
+        CREATE TABLE IF NOT EXISTS chat_avatars (
+            license VARCHAR(60) PRIMARY KEY,
+            avatar MEDIUMTEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+    ]])
+end)
+
+-- Receive avatar from client (base64 from MugShotBase64)
+RegisterNetEvent('rp-chat:updateAvatar')
+AddEventHandler('rp-chat:updateAvatar', function(base64)
+    local src = source
+    if type(base64) ~= 'string' then return end
+    if not base64:match('^data:image/') then return end
+    if #base64 > 60000 then return end -- 128x128 PNG ~10-25KB
+
+    avatarCache[src] = base64
+
+    -- Broadcast to all clients
+    TriggerClientEvent('rp-chat:avatarUpdate', -1, src, base64)
+
+    -- Save to DB
+    local license = GetPlayerIdentifier(src)
+    if license then
+        MySQL.query('INSERT INTO chat_avatars (license, avatar) VALUES (?, ?) ON DUPLICATE KEY UPDATE avatar = VALUES(avatar)', {license, base64})
+    end
+end)
+
+-- Load avatar from DB when player joins
+AddEventHandler('playerJoining', function()
+    local src = source
+    CreateThread(function()
+        Wait(3000)
+        local license = GetPlayerIdentifier(src)
+        if not license then return end
+        local result = MySQL.query.await('SELECT avatar FROM chat_avatars WHERE license = ?', {license})
+        if result and result[1] and result[1].avatar then
+            avatarCache[src] = result[1].avatar
+        end
+    end)
+end)
+
+-- Send all cached avatars to newly connected player
+RegisterNetEvent('rp-chat:requestAvatars')
+AddEventHandler('rp-chat:requestAvatars', function()
+    local src = source
+    for sid, av in pairs(avatarCache) do
+        TriggerClientEvent('rp-chat:avatarUpdate', src, sid, av)
+    end
+end)
+
+-- Cleanup on disconnect
+AddEventHandler('playerDropped', function()
+    avatarCache[source] = nil
+    lastPmSender[source] = nil
+end)
+
+-- Cleanup old cooldowns every 5 minutes
+CreateThread(function()
+    while true do
+        Wait(300000)
+        local now = GetGameTimer()
+        for id, cmds in pairs(cooldowns) do
+            local hasActive = false
+            for cmd, expiry in pairs(cmds) do
+                if expiry < now then
+                    cmds[cmd] = nil
+                else
+                    hasActive = true
+                end
+            end
+            if not hasActive then
+                cooldowns[id] = nil
+            end
+        end
+    end
+end)
+
+-- Sanitize message text
+local function SanitizeText(text)
+    if type(text) ~= 'string' then return '' end
+    text = text:match('^%s*(.-)%s*$') or ''
+    text = text:gsub('[%c]', '')
+    return text
+end
+
+-- Get player identifier
+local function GetPlayerIdentifier(source)
+    for _, id in ipairs(GetPlayerIdentifiers(source)) do
+        if string.match(id, 'license:') then
+            return id
+        end
+    end
+    return tostring(source)
+end
+
+-- Check cooldown
+local function CheckCooldown(source, cmdType)
+    local identifier = GetPlayerIdentifier(source)
+    local cooldown = Config.Cooldowns[cmdType] or Config.Cooldowns.default
+
+    if cooldowns[identifier] and cooldowns[identifier][cmdType] then
+        local remaining = cooldowns[identifier][cmdType] - GetGameTimer()
+        if remaining > 0 then
+            return false, remaining
+        end
+    end
+
+    if not cooldowns[identifier] then
+        cooldowns[identifier] = {}
+    end
+    cooldowns[identifier][cmdType] = GetGameTimer() + cooldown
+
+    return true
+end
+
+-- Get nearby players
+local function GetNearbyPlayers(source, range)
+    local players = {}
+    local sourcePed = GetPlayerPed(source)
+
+    if not sourcePed or sourcePed == 0 then
+        return players
+    end
+
+    local sourceCoords = GetEntityCoords(sourcePed)
+
+    for _, playerId in ipairs(GetPlayers()) do
+        local targetPed = GetPlayerPed(playerId)
+        if targetPed and targetPed ~= 0 then
+            local targetCoords = GetEntityCoords(targetPed)
+            local distance = #(sourceCoords - targetCoords)
+
+            if distance <= range then
+                table.insert(players, tonumber(playerId))
+            end
+        end
+    end
+
+    return players
+end
+
+-- Check if command is global (server-side determination)
+local function IsGlobalCommand(cmdType)
+    for _, cmd in ipairs(Config.GlobalCommands) do
+        if cmd == cmdType then
+            return true
+        end
+    end
+    return false
+end
+
+-- Check if player has required job (server-side)
+local function HasRequiredJob(source, cmdType)
+    local jobs = Config.JobCommands[cmdType]
+    if not jobs then return true end -- no restriction
+
+    -- Check ACE permission as override
+    if IsPlayerAceAllowed(source, 'command.' .. cmdType) then
+        return true
+    end
+
+    -- Check staff ranks
+    for _, rank in ipairs(Config.StaffRanks) do
+        if IsPlayerAceAllowed(source, 'group.' .. rank) then
+            return true
+        end
+    end
+
+    -- TODO: Check actual job via framework export if needed
+    return true -- Allow by default, framework job check can be added
+end
+
+-- Send message to players
+local function SendToPlayers(players, msg)
+    for _, playerId in ipairs(players) do
+        TriggerClientEvent('rp-chat:receiveMessage', playerId, msg)
+    end
+end
+
+-- Broadcast to all players
+local function Broadcast(msg)
+    TriggerClientEvent('rp-chat:receiveMessage', -1, msg)
+end
+
+-- Valid message types
+local validTypes = {
+    chat = true, me = true, ['do'] = true, ['try'] = true,
+    ooc = true, gooc = true,
+    whisper = true, shout = true, tweet = true, ad = true, news = true,
+    radio = true, ['911'] = true, ['311'] = true, ems = true,
+    pm = true, r = true, announce = true, staff = true, report = true,
+    anon = true,
+}
+
+-- Tags for message types
+local tags = {
+    me = nil,
+    ['do'] = nil,
+    ['try'] = 'TRY',
+    ooc = 'OOC',
+    gooc = 'GOOC',
+    whisper = 'W',
+    shout = 'S',
+    tweet = 'TW',
+    ad = 'AD',
+    news = 'NEWS',
+    radio = 'RADIO',
+    ['911'] = '911',
+    ['311'] = '311',
+    ems = 'EMS',
+    pm = 'PM',
+    r = 'PM',
+    anon = 'ANON',
+    announce = 'ANNOUNCE',
+    staff = 'STAFF',
+    report = 'REPORT',
+    chat = 'IC'
+}
+
+-- Handle chat message (SECURITY: server determines all critical fields)
+RegisterNetEvent('rp-chat:sendMessage')
+AddEventHandler('rp-chat:sendMessage', function(data)
+    local source = source
+
+    -- Validate source
+    if not source or source <= 0 then return end
+    if not GetPlayerName(source) then return end
+
+    -- Validate data
+    if type(data) ~= 'table' then return end
+
+    -- Server determines player name (NEVER trust client)
+    local playerName = GetPlayerName(source)
+    if not playerName or playerName == '' then
+        playerName = 'Unknown'
+    end
+
+    -- Validate and determine message type (server-side)
+    local msgType = 'chat'
+    if type(data.type) == 'string' and validTypes[data.type] then
+        msgType = data.type
+    end
+
+    -- Check cooldown
+    local canSend, remaining = CheckCooldown(source, msgType)
+    if not canSend then
+        TriggerClientEvent('rp-chat:systemMessage', source,
+            'Počkej ' .. math.ceil(remaining / 1000) .. 's před dalším použitím.')
+        return
+    end
+
+    -- Sanitize and validate message text
+    local text = SanitizeText(data.text)
+    if #text == 0 then return end
+    if #text > Config.MaxMessageLength then
+        text = string.sub(text, 1, Config.MaxMessageLength)
+    end
+
+    -- /pm and /r are meant to go to ONE specific player, not whoever is
+    -- nearby or everyone — they used to fall through to the normal
+    -- range/global routing below (Config.Ranges has no 'pm'/'r' entry, so
+    -- they silently used Config.Ranges.normal = 15m), which meant a
+    -- "private" message was actually broadcast to anyone standing close by
+    -- and never reached the real target if they were far away. Resolve the
+    -- real target here and deliver directly to just the two of them.
+    local pmTarget = nil
+    if msgType == 'pm' then
+        local targetIdStr, pmText = text:match('^(%d+)%s+(.+)$')
+        if not targetIdStr then
+            TriggerClientEvent('rp-chat:systemMessage', source, 'Použití: /pm [ID hráče] zpráva')
+            return
+        end
+        pmTarget = tonumber(targetIdStr)
+        if pmTarget == source then
+            TriggerClientEvent('rp-chat:systemMessage', source, 'Nemůžeš poslat PM sám sobě.')
+            return
+        end
+        if not pmTarget or not GetPlayerName(pmTarget) then
+            TriggerClientEvent('rp-chat:systemMessage', source, 'Hráč s ID ' .. targetIdStr .. ' nebyl nalezen.')
+            return
+        end
+        text = pmText
+        lastPmSender[pmTarget] = source
+    elseif msgType == 'r' then
+        pmTarget = lastPmSender[source]
+        if not pmTarget or not GetPlayerName(pmTarget) then
+            TriggerClientEvent('rp-chat:systemMessage', source, 'Nemáš komu odpovědět.')
+            return
+        end
+        lastPmSender[pmTarget] = source
+    end
+
+    -- Check job restrictions (server-side)
+    if not HasRequiredJob(source, msgType) then
+        TriggerClientEvent('rp-chat:systemMessage', source,
+            'Nemáš oprávnění použít tento příkaz.')
+        return
+    end
+
+    -- ACE check for admin commands
+    if msgType == 'announce' or msgType == 'staff' then
+        local hasPermission = false
+        for _, rank in ipairs(Config.StaffRanks) do
+            if IsPlayerAceAllowed(source, 'group.' .. rank) then
+                hasPermission = true
+                break
+            end
+        end
+        if not hasPermission and not IsPlayerAceAllowed(source, 'command.' .. msgType) then
+            TriggerClientEvent('rp-chat:systemMessage', source,
+                'Nemáš oprávnění použít tento příkaz.')
+            return
+        end
+    end
+
+    -- Try action: server determines success (50/50)
+    local trySuccess = nil
+    if msgType == 'try' then
+        trySuccess = math.random() >= 0.5
+    end
+
+    -- Anonymous messages: swap the real name for "Anonym" and don't leak
+    -- serverId (the client uses it to look up cached avatars/updates, which
+    -- would defeat the anonymity) or a PM sender trail.
+    local displayName = playerName
+    local displaySourceId = source
+    if msgType == 'anon' then
+        displayName = 'Anonym'
+        displaySourceId = nil
+    end
+
+    -- Reply quote: client-supplied display metadata only (which message the
+    -- player clicked "reply" on) — re-sanitize name/text the same way the
+    -- main message is, same length cap, so it can't be used to smuggle
+    -- unsanitized/oversized content into the chat.
+    local replyTo = nil
+    if type(data.replyTo) == 'table' then
+        local rName = SanitizeText(data.replyTo.name)
+        local rText = SanitizeText(data.replyTo.text)
+        if #rName > 0 and #rText > 0 then
+            if #rText > 100 then rText = string.sub(rText, 1, 100) end
+            replyTo = { id = data.replyTo.id, name = rName, text = rText }
+        end
+    end
+
+    -- Build message (server controls color, tag, everything)
+    local msg = {
+        type = msgType,
+        tag = tags[msgType],
+        name = displayName,
+        text = text,
+        color = Config.Colors[msgType] or Config.Colors.chat,
+        timestamp = os.time() * 1000,
+        serverId = displaySourceId,
+        success = trySuccess,
+        replyTo = replyTo
+    }
+
+    -- Server determines routing (NEVER trust client isGlobal/range)
+    if pmTarget then
+        -- Deliver only to the sender (so they see their own message) and
+        -- the resolved target — never proximity or global.
+        TriggerClientEvent('rp-chat:receiveMessage', source, msg)
+        TriggerClientEvent('rp-chat:receiveMessage', pmTarget, msg)
+    elseif IsGlobalCommand(msgType) then
+        Broadcast(msg)
+
+        -- Log important messages
+        if msgType == '911' or msgType == 'announce' or msgType == 'report' then
+            print(('[%s] %s: %s'):format(msgType:upper(), playerName, text))
+        end
+    else
+        -- Server determines range from config
+        local range = Config.Ranges[msgType] or Config.Ranges.normal
+        local nearbyPlayers = GetNearbyPlayers(source, range)
+        SendToPlayers(nearbyPlayers, msg)
+    end
+end)
+
+-- Admin commands
+RegisterCommand('announce', function(source, args)
+    if source == 0 or IsPlayerAceAllowed(source, 'command.announce') then
+        local text = SanitizeText(table.concat(args, ' '))
+        if text ~= '' then
+            Broadcast({
+                type = 'announce',
+                tag = 'ANNOUNCE',
+                name = source == 0 and 'Server' or GetPlayerName(source),
+                text = text,
+                color = Config.Colors.announce,
+                timestamp = os.time() * 1000
+            })
+        end
+    end
+end, true)
+
+RegisterCommand('clearallchat', function(source)
+    if source == 0 or IsPlayerAceAllowed(source, 'command.clearallchat') then
+        TriggerClientEvent('rp-chat:clear', -1)
+    end
+end, true)
+
+-- Export functions
+exports('sendMessage', function(target, msg)
+    TriggerClientEvent('rp-chat:receiveMessage', target, msg)
+end)
+
+exports('broadcast', Broadcast)
+
+exports('sendSystemMessage', function(target, text)
+    TriggerClientEvent('rp-chat:systemMessage', target, text)
+end)
+
+-- Toast notification from any other resource, e.g.:
+--   exports['rp-chat']:notify(source, 'warning', 'Pokuta', 'Dostal jsi pokutu 10 000 Kč')
+-- target = -1 notifies everyone.
+exports('notify', function(target, notifyType, title, message)
+    TriggerClientEvent('rp-chat:notify', target, notifyType, title, message)
+end)
+
+-- Resource start
+AddEventHandler('onResourceStart', function(resource)
+    if resource == GetCurrentResourceName() then
+        print('^2[RP-Chat]^0 Resource started successfully!')
+    end
+end)

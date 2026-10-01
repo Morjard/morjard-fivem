@@ -1,0 +1,84 @@
+Config = {}
+
+-- Chat Settings
+Config.MaxMessageLength = 256
+Config.DefaultRange = 'normal' -- whisper, normal, shout
+-- (removed: Config.MaxMessages — never read by server.lua/client.lua; the
+-- per-client visible log length is settings.maxMessages in useSettings.js,
+-- a same-named but unrelated Vue setting. Kept as one admin-facing knob to
+-- avoid the confusing "this doesn't do anything" duplicate.)
+
+-- Ranges (in meters)
+Config.Ranges = {
+    whisper = 3.0,
+    normal = 15.0,
+    shout = 30.0,
+    me = 15.0,
+    ['do'] = 15.0,
+    ['try'] = 15.0,
+    ooc = 20.0,
+    radio = 0.0, -- global (added to GlobalCommands)
+    ems = 0.0,   -- global (added to GlobalCommands)
+}
+
+-- Global commands (server-wide, no proximity)
+Config.GlobalCommands = {
+    'gooc', 'tweet', 'ad', 'news', '911', '311', 'announce', 'staff', 'report', 'radio', 'ems'
+}
+
+-- Job-restricted commands
+Config.JobCommands = {
+    news = { 'reporter', 'news' },
+    radio = { 'police', 'ambulance', 'mechanic' },
+    ems = { 'ambulance', 'doctor' },
+    announce = { 'admin' }
+}
+
+-- Command Colors (hex)
+Config.Colors = {
+    chat = '#ffffff',
+    me = '#a855f7',
+    ['do'] = '#a855f7',
+    ['try'] = '#f59e0b',
+    ooc = '#6b7280',
+    gooc = '#6b7280',
+    whisper = '#3b82f6',
+    shout = '#ef4444',
+    tweet = '#1d9bf0',
+    ad = '#22c55e',
+    news = '#f97316',
+    radio = '#eab308',
+    ['911'] = '#dc2626',
+    ['311'] = '#2563eb',
+    ems = '#22d3ee',
+    pm = '#e879f9',
+    r = '#e879f9',
+    anon = '#94a3b8',
+    announce = '#f59e0b',
+    staff = '#f97316',
+    report = '#fbbf24',
+    system = '#64748b'
+}
+
+-- Keybinds
+Config.OpenKey = 'T'
+Config.OpenKeyCommand = 'chatOpen'
+
+-- Cooldowns (in ms)
+Config.Cooldowns = {
+    default = 1000,
+    tweet = 5000,
+    ad = 30000,
+    ['911'] = 10000,
+    announce = 5000,
+    report = 15000,
+    anon = 8000 -- longer than default so anonymity can't be used to spam
+}
+
+-- Staff Ranks (for admin commands)
+Config.StaffRanks = {
+    'admin', 'moderator', 'helper'
+}
+
+-- Framework detection
+Config.Framework = 'auto' -- 'qbcore', 'esx', 'standalone', 'auto'

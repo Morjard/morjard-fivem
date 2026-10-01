@@ -1,0 +1,384 @@
+local QBCore = exports['qb-core']:GetCoreObject()
+
+-- ============================================================
+-- STATE
+-- ============================================================
+local weatherData     = {}          -- [zoneId] = { weather, temperature, windSpeed, ... }
+local lastAdminChange = {}          -- [zoneId] = timestamp — when admin last set weather
+local playerRequests  = {}          -- rate limiting
+local activeEvent     = nil         -- currently active special event (nil = none)
+local currentTime     = { hour = 12, minute = 0 }
+
+-- Tsunami water level (synced to all clients by server loop)
+local tsunamiActive      = false
+local tsunamiWaterHeight = 0.0
+local tsunamiMax         = 50.0
+local tsunamiSpeed       = 0.05
+local tsunamiWaitMs      = 100
+
+-- After admin sets weather, dynamic changes are paused for this many seconds
+local ADMIN_LOCK_DURATION = 300  -- 5 minutes
+
+-- ============================================================
+-- TEMPERATURE HELPER
+-- ============================================================
+local function getDynamicTemperature(weatherType)
+    local data = Config.WeatherTypes[weatherType]
+    if not data then return 20 end
+    local min   = data.tempMin or (data.temperature - 3)
+    local max   = data.tempMax or (data.temperature + 3)
+    local range = (max - min) * 10
+    return (math.random(0, range) / 10) + min
+end
+
+-- ============================================================
+-- INIT ZONE WEATHER
+-- ============================================================
+for i, zone in ipairs(Config.WeatherZones) do
+    local wType = Config.PermanentWeatherZones[i] or zone.weather
+    local wData = Config.WeatherTypes[wType] or Config.WeatherTypes['CLEAR']
+    weatherData[i] = {
+        weather     = wType,
+        temperature = getDynamicTemperature(wType),
+        windSpeed   = wData.windSpeed   or 0,
+        rainLevel   = wData.rainLevel   or 0,
+        fogLevel    = wData.fogLevel    or 0,
+        lastChanged = os.time()
+    }
+    lastAdminChange[i] = 0  -- 0 = never set by admin
+end
+
+-- ============================================================
+-- SECURITY — rate limiting
+-- ============================================================
+local function checkSecurity(src)
+    if not Config.Security.enabled then return true end
+    local now = os.time()
+    if not playerRequests[src] then
+        playerRequests[src] = { count = 0, lastReset = now }
+    end
+    local d = playerRequests[src]
+    if now - d.lastReset > 60 then d.count = 0; d.lastReset = now end
+    d.count = d.count + 1
+    if d.count > Config.Security.maxRequestsPerMinute then
+        if Config.Security.kickOnExploit then
+            DropPlayer(src, 'Security: Too many requests')
+        end
+        if Config.Security.logExploits then
+            print('^1[Morjard-Security] Player ' .. src .. ' exceeded rate limit^7')
+        end
+        return false
+    end
+    return true
+end
+
+-- ============================================================
+-- TIME SYSTEM
+-- ============================================================
+local function getTime()
+    if Config.RealTime.enabled then
+        local ts   = os.time() + (Config.RealTime.timezone * 3600)
+        local date = os.date('*t', ts)
+        return { hour = date.hour, minute = date.min }
+    end
+    return currentTime
+end
+
+-- Time progression loop
+CreateThread(function()
+    while true do
+        Wait(Config.Sync.timeInterval or 1000)
+        if Config.TimeSync and not Config.RealTime.enabled then
+            currentTime.minute = currentTime.minute + (Config.TimescaleSpeed or 1)
+            if currentTime.minute >= 60 then
+                currentTime.minute = 0
+                currentTime.hour   = (currentTime.hour + 1) % 24
+            end
+        end
+        TriggerClientEvent('morjard-weather:client:forceTimeSync', -1, getTime())
+    end
+end)
+
+-- ============================================================
+-- WEATHER SYNC LOOP — every 5s push all zone data to clients
+-- ============================================================
+CreateThread(function()
+    while true do
+        Wait(Config.Sync.forceSyncInterval or 5000)
+        for zoneId, data in pairs(weatherData) do
+            TriggerClientEvent('morjard-weather:client:forceWeatherSync', -1, zoneId, data)
+        end
+    end
+end)
+
+-- ============================================================
+-- DYNAMIC WEATHER — changes every N minutes
+-- Respects admin lock: if admin set weather within last 5 min, skip
+-- NEVER changes weather when special event is active
+-- ============================================================
+local function getNextWeather(current)
+    local wt = Config.WeatherTypes[current]
+    if not wt or not wt.canTransitionTo or #wt.canTransitionTo == 0 then
+        return current
+    end
+    return wt.canTransitionTo[math.random(1, #wt.canTransitionTo)]
+end
+
+CreateThread(function()
+    while true do
+        Wait((Config.DynamicWeather.changeInterval or 5) * 60 * 1000)
+
+        -- Never change weather during special event
+        if activeEvent ~= nil then
+            if Config.Debug then print('^3[Morjard-Weather]^7 Dynamic weather skipped — event active: ' .. tostring(activeEvent)) end
+            goto dynSkip
+        end
+
+        if Config.DynamicWeather.enabled then
+            for i = 1, #Config.WeatherZones do
+                -- Skip permanent zones
+                if Config.PermanentWeatherZones[i] and Config.DynamicWeather.respectPermanent then
+                    goto zoneSkip
+                end
+
+                -- Skip if admin changed this zone recently (within ADMIN_LOCK_DURATION seconds)
+                local timeSinceAdminChange = os.time() - (lastAdminChange[i] or 0)
+                if timeSinceAdminChange < ADMIN_LOCK_DURATION then
+                    if Config.Debug then print('^3[Morjard-Weather]^7 Zone ' .. i .. ' locked by admin for ' .. (ADMIN_LOCK_DURATION - timeSinceAdminChange) .. 's more') end
+                    goto zoneSkip
+                end
+
+                local nextW = getNextWeather(weatherData[i].weather)
+                if nextW ~= weatherData[i].weather then
+                    local d = Config.WeatherTypes[nextW]
+                    weatherData[i] = {
+                        weather     = nextW,
+                        temperature = getDynamicTemperature(nextW),
+                        windSpeed   = d.windSpeed   or 0,
+                        rainLevel   = d.rainLevel   or 0,
+                        fogLevel    = d.fogLevel    or 0,
+                        lastChanged = os.time()
+                    }
+                    TriggerClientEvent('morjard-weather:client:forceWeatherSync', -1, i, weatherData[i])
+                    if Config.Debug then print('^2[Morjard-Weather]^7 Zone ' .. i .. ' dynamic change -> ' .. nextW) end
+                end
+
+                ::zoneSkip::
+            end
+        end
+
+        ::dynSkip::
+    end
+end)
+
+-- ============================================================
+-- ADMIN: SET WEATHER
+-- Sets zone weather + marks admin lock timestamp
+-- ============================================================
+local function setWeather(zoneId, weatherType)
+    if type(zoneId) ~= 'number' or zoneId < 1 or zoneId > #Config.WeatherZones then return false end
+    if not Config.WeatherTypes[weatherType] then return false end
+    if Config.PermanentWeatherZones[zoneId]  then return false end
+
+    local d = Config.WeatherTypes[weatherType]
+    weatherData[zoneId] = {
+        weather     = weatherType,
+        temperature = getDynamicTemperature(weatherType),
+        windSpeed   = d.windSpeed   or 0,
+        rainLevel   = d.rainLevel   or 0,
+        fogLevel    = d.fogLevel    or 0,
+        lastChanged = os.time()
+    }
+
+    -- Lock this zone from dynamic changes for ADMIN_LOCK_DURATION seconds
+    lastAdminChange[zoneId] = os.time()
+
+    TriggerClientEvent('morjard-weather:client:forceWeatherSync', -1, zoneId, weatherData[zoneId])
+    print('^2[Morjard-Weather]^7 Admin set zone ' .. zoneId .. ' to ' .. weatherType .. ' (locked ' .. ADMIN_LOCK_DURATION .. 's)')
+    return true
+end
+
+-- ============================================================
+-- TSUNAMI WATER LEVEL — server controls the height
+-- Server loop raises water, clients apply via native
+-- ============================================================
+CreateThread(function()
+    while true do
+        Wait(tsunamiActive and tsunamiWaitMs or 5000)
+        if tsunamiActive then
+            if tsunamiWaterHeight < tsunamiMax then
+                tsunamiWaterHeight = tsunamiWaterHeight + tsunamiSpeed
+                TriggerClientEvent('morjard-weather:client:tsunamiHeight', -1, tsunamiWaterHeight)
+            end
+            -- Water stays at max until admin stops
+        end
+    end
+end)
+
+-- ============================================================
+-- NET EVENTS
+-- ============================================================
+
+-- Initial sync when player joins
+RegisterNetEvent('morjard-weather:server:sync', function()
+    local src = source
+    if not checkSecurity(src) then return end
+    TriggerClientEvent('morjard-weather:client:init', src, weatherData, getTime())
+
+    -- If event is active, sync to joining player
+    if activeEvent and activeEvent ~= '' then
+        local eventAtJoin = activeEvent
+        Wait(2000)  -- wait for client to initialize first
+        -- Recheck: event may have been stopped during wait
+        if activeEvent ~= eventAtJoin then return end
+        TriggerClientEvent('morjard-weather:client:specialEvent', src, activeEvent)
+
+        -- If tsunami active, also sync water height
+        if activeEvent == 'tsunami' and tsunamiActive then
+            TriggerClientEvent('morjard-weather:client:tsunamiLoad', src)
+            Wait(500)
+            TriggerClientEvent('morjard-weather:client:tsunamiHeight', src, tsunamiWaterHeight)
+        end
+    end
+end)
+
+-- Admin changes weather
+RegisterNetEvent('morjard-weather:server:weather', function(zoneId, weatherType)
+    local src = source
+    if not checkSecurity(src) then return end
+    if not QBCore.Functions.HasPermission(src, 'admin') then return end
+    if setWeather(zoneId, weatherType) then
+        TriggerClientEvent('QBCore:Notify', src, 'Weather set: ' .. weatherType, 'success')
+    end
+end)
+
+-- Admin changes time
+RegisterNetEvent('morjard-weather:server:time', function(hour, minute)
+    local src = source
+    if not checkSecurity(src) then return end
+    if not QBCore.Functions.HasPermission(src, 'admin') then return end
+    if type(hour) ~= 'number' or type(minute) ~= 'number' then return end
+    hour = math.floor(hour) % 24
+    minute = math.floor(minute) % 60
+    currentTime = { hour = hour, minute = minute }
+    TriggerClientEvent('morjard-weather:client:forceTimeSync', -1, currentTime)
+end)
+
+-- Admin toggles real time
+RegisterNetEvent('morjard-weather:server:realtime', function(enabled, offset)
+    local src = source
+    if not checkSecurity(src) then return end
+    if not QBCore.Functions.HasPermission(src, 'admin') then return end
+    Config.RealTime.enabled  = enabled and true or false
+    offset = tonumber(offset) or 1
+    Config.RealTime.timezone = math.max(-12, math.min(14, offset))
+end)
+
+-- ============================================================
+-- SPECIAL EVENTS — server is source of truth
+-- Events NEVER auto-stop — only admin can stop them
+-- ============================================================
+RegisterNetEvent('morjard-weather:server:specialEvent', function(eventType)
+    local src = source
+    if not checkSecurity(src) then return end
+    if not QBCore.Functions.HasPermission(src, 'admin') then
+        TriggerClientEvent('QBCore:Notify', src, T('notify_no_perm'), 'error')
+        return
+    end
+
+    print('^3[Morjard-Events]^7 Admin ' .. src .. ' triggered: ' .. tostring(eventType))
+
+    if eventType == 'stop_all' then
+        local wasTsunami = (activeEvent == 'tsunami')
+        activeEvent        = nil
+        tsunamiActive      = false
+        tsunamiWaterHeight = 0.0
+
+        -- Send tsunami stop FIRST so water starts receding
+        if wasTsunami then
+            TriggerClientEvent('morjard-weather:client:tsunamiStop', -1)
+        end
+
+        TriggerClientEvent('morjard-weather:client:specialEvent', -1, 'stop_all')
+
+        -- Push zone weather back to all clients after cleanup
+        CreateThread(function()
+            Wait(1500)
+            for zoneId, data in pairs(weatherData) do
+                TriggerClientEvent('morjard-weather:client:forceWeatherSync', -1, zoneId, data)
+            end
+        end)
+
+        TriggerClientEvent('QBCore:Notify', src, T('event_stopped'), 'success')
+    else
+        activeEvent = eventType
+
+        -- Handle tsunami water on server side
+        if eventType == 'tsunami' then
+            tsunamiActive      = true
+            tsunamiWaterHeight = 0.0
+            -- Load flood XML on all clients
+            TriggerClientEvent('morjard-weather:client:tsunamiLoad', -1)
+        end
+
+        TriggerClientEvent('morjard-weather:client:specialEvent', -1, eventType)
+        TriggerClientEvent('QBCore:Notify', src, T('event_started') .. eventType, 'success')
+    end
+end)
+
+-- ============================================================
+-- THIRST DRAIN — server side, uses correct QBCore method
+-- Called by client temperature loop (hotter = more frequent)
+-- ============================================================
+RegisterNetEvent('morjard-weather:server:drainThirst', function(amount)
+    local src    = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+
+    -- Clamp amount to valid positive range (prevent exploit with negative values)
+    amount = math.max(0, math.min(10, tonumber(amount) or 1))
+    local currentThirst = Player.PlayerData.metadata['thirst'] or 100
+    local newThirst     = math.max(0, currentThirst - amount)
+
+    Player.Functions.SetMetaData('thirst', newThirst)
+    TriggerClientEvent('hud:client:UpdateNeeds', src,
+        Player.PlayerData.metadata['hunger'] or 100,
+        newThirst
+    )
+end)
+
+-- ============================================================
+-- COMMANDS
+-- ============================================================
+QBCore.Commands.Add('weathermenu', 'Open weather control menu (admin)', {}, false, function(src)
+    TriggerClientEvent('morjard-weather:client:menu', src)
+end, 'admin')
+
+QBCore.Commands.Add('syncweather', 'Force sync all weather (admin)', {}, false, function(src)
+    if not QBCore.Functions.HasPermission(src, 'admin') then return end
+    for zoneId, data in pairs(weatherData) do
+        TriggerClientEvent('morjard-weather:client:forceWeatherSync', -1, zoneId, data)
+    end
+    TriggerClientEvent('QBCore:Notify', src, 'Force synced!', 'success')
+end, 'admin')
+
+-- Cleanup on disconnect
+AddEventHandler('playerDropped', function()
+    playerRequests[source] = nil
+end)
+
+
+-- ============================================================
+-- /weather COMMAND — VŽDY otevře hráčský tablet (všichni včetně adminů)
+-- /weathermenu — otevře admin control panel (jen admini)
+-- ============================================================
+RegisterNetEvent('morjard-weather:server:openUI', function()
+    local src = source
+    if not checkSecurity(src) then return end
+    -- Vždy tablet — bez ohledu na rank
+    TriggerClientEvent('morjard-weather:client:openPlayerTablet', src)
+end)
+
+print('^2[Morjard-Weather]^7 Server v4 loaded (security patched) | Zones: ' .. #Config.WeatherZones)
+print('^2[Morjard-Weather]^7 Admin lock duration: ' .. ADMIN_LOCK_DURATION .. 's after weather change')
+print('^2[Morjard-Weather]^7 Dynamic weather: every ' .. (Config.DynamicWeather.changeInterval or 5) .. ' min')

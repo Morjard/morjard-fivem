@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" style="background:transparent!important">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morjard Spawn Selector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- additive hybrid Morjard/DDCZ style bridge, see morjard-settings -->
+    <script src="js/morjard-style-bridge.js"></script>
+</head>
+<body>
+
+    <!-- AMBIENT EFFECTS -->
+    <div class="grid-bg"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="particle" style="top:15%;left:10%;animation-delay:0s"></div>
+    <div class="particle" style="top:45%;left:85%;animation-delay:1.5s"></div>
+    <div class="particle" style="top:70%;left:25%;animation-delay:3s"></div>
+    <div class="particle" style="top:30%;left:65%;animation-delay:4.5s"></div>
+    <div class="particle" style="top:80%;left:50%;animation-delay:2s"></div>
+
+    <!-- VIGNETTE OVERLAY -->
+    <div class="vignette"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="spawn-selector hidden" id="spawnSelector">
+
+        <!-- TOP BAR -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="logo-icon">
+                    <i class="fas fa-fire"></i>
+                    <div class="logo-ring"></div>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-main">MOR<span class="hi">JARD</span></span>
+                    <span class="logo-sub">SPAWN SELECTOR</span>
+                </div>
+            </div>
+            <div class="topbar-center">
+                <div class="selected-indicator">
+                    <div class="pulse-dot"></div>
+                    <span class="selected-name" id="selectedName">SELECT LOCATION</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="category-filter">
+                    <div class="cat-btn active" data-cat="all" title="All">
+                        <i class="fas fa-th"></i>
+                    </div>
+                    <div class="cat-btn" data-cat="last" title="Last Location">
+                        <i class="fas fa-clock-rotate-left"></i>
+                    </div>
+                    <div class="cat-btn" data-cat="property" title="Properties">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="cat-btn" data-cat="default" title="Default Spawns">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PINS AREA (fullscreen overlay on game view, left of sidebar) -->
+        <div class="map-area">
+            <div class="map-pins" id="mapPins">
+                <!-- Diamond pins dynamically generated -->
+            </div>
+
+            <!-- LOCATION INFO (bottom-left) -->
+            <div class="location-info" id="locationInfo">
+                <div class="info-icon">
+                    <i class="fas fa-map-pin" id="infoIcon"></i>
+                </div>
+                <div class="info-text">
+                    <span class="info-name" id="infoName">SELECT A LOCATION</span>
+                    <span class="info-desc" id="infoDesc">Click a pin or card to preview</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">LOCATIONS</span>
+                <span class="sidebar-count" id="locCount">0</span>
+            </div>
+
+            <div class="sidebar-scroll" id="locationList">
+                <!-- Location cards dynamically generated -->
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="sidebar-actions">
+                <button class="btn-secondary" id="btnLastLocation">
+                    <i class="fas fa-clock-rotate-left"></i> LAST LOCATION
+                </button>
+                <button class="btn-ember disabled" id="btnSpawn">
+                    <i class="fas fa-bolt"></i>
+                    <span id="btnSpawnText">SPAWN</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

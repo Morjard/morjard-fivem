@@ -1,0 +1,595 @@
+================================================================================
+  FiveM HUD - Style Guide
+  Zachovani vizualniho stylu z rp-chat projektu
+  Autor: Morjard | Verze: 1.0
+================================================================================
+
+
+1. ZAKLADNI FILOSOFIE
+================================================================================
+
+  Styl: Cyberpunk / Glass Morphism / Gaming UI
+  Tmave pozadi s prusvitnosti + backdrop blur + neonove akcenty
+  Kazdy panel je "skleneny" - pruhledny, rozmazany, s jemnym borderem
+  Rohy maji cyberpunk dekorace (L-shaped corners s glow efektem)
+  Vsechno ma jemne animace a glow efekty
+
+
+2. BAREVNA PALETA
+================================================================================
+
+  -- Hlavni accent (nastavitelny uzivatelem, default):
+  --accent:           #10b981   (emerald green)
+  --accent-rgb:       16, 185, 129
+
+  -- Cyberpunk tema:
+  --accent:           #ff9a1f   (orange)
+  --accent-rgb:       255, 154, 31
+
+  -- Sekundarni:
+  --secondary:        #3b82f6   (blue)
+
+  -- Pozadi (vzdy tmave, pruhledne):
+  bg-dark:            rgba(15, 20, 35, 0.65)   -- hlavni panely
+  bg-darker:          rgba(15, 20, 35, 0.95)   -- input, aktivni panely
+  bg-overlay:         rgba(0, 0, 0, 0.2)       -- headery, sekce
+
+  -- Text:
+  text-primary:       #ffffff
+  text-secondary:     #cccccc
+  text-muted:         #888888 / #666666
+
+  -- Bordery:
+  border-default:     rgba(255, 255, 255, 0.08)  -- jemny
+  border-light:       rgba(255, 255, 255, 0.1)   -- standardni
+  border-hover:       rgba(255, 255, 255, 0.15)  -- hover
+  border-active:      var(--accent)               -- focus/active
+
+  -- Tag barvy (pro ruzne typy zprav / HUD elementu):
+  emergency-red:      #ff4444 / #ef4444
+  shout-red:          #ff6b6b
+  system-gray:        #94a3b8
+  ooc-gray:           #a1a1aa
+  gm-gold:            #ffd700
+  player-green:       #4ade80
+  ic-green:           #34d399
+  action-purple:      #c084fc / #a78bfa
+  whisper-blue:       #60a5fa
+  radio-blue:         #38bdf8
+  news-orange:        #fb923c
+  tweet-blue:         #1d9bf0
+  success:            #4ade80
+  fail:               #f87171
+
+
+3. GLASS MORPHISM - ZAKLADNI PANEL
+================================================================================
+
+  Pouzivej toto jako zaklad pro KAZDY HUD element:
+
+  .hud-panel {
+    background: linear-gradient(
+      135deg,
+      rgba(15, 20, 35, 0.65) 0%,
+      rgba(25, 32, 50, 0.6) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  -- Pro aktivni/focused panely (vyssi opacita):
+  .hud-panel-active {
+    background: linear-gradient(
+      135deg,
+      rgba(15, 20, 35, 0.95) 0%,
+      rgba(25, 32, 50, 0.92) 100%
+    );
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  }
+
+  -- Scanline overlay na panelech (jemny efekt):
+  .panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.015),
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0.6;
+  }
+
+
+4. ROHOVE DEKORACE (CYBERPUNK CORNERS)
+================================================================================
+
+  Levy horni + pravy dolni roh - L-tvar s accent barvou a glow:
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 25px;
+    height: 25px;
+    border-top: 2px solid var(--accent);
+    border-left: 2px solid var(--accent);
+    opacity: 0.7;
+    pointer-events: none;
+    filter: drop-shadow(0 0 6px var(--accent));
+    animation: cornerPulse 3s ease-in-out infinite;
+  }
+
+  .panel::after {
+    /* ... scanline overlay - pouzij extra element */
+  }
+
+  /* Nebo pres extra div: */
+  .corner-bottom-right {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 25px;
+    height: 25px;
+    border-bottom: 2px solid var(--accent);
+    border-right: 2px solid var(--accent);
+    opacity: 0.7;
+    filter: drop-shadow(0 0 6px var(--accent));
+    animation: cornerPulse 3s ease-in-out infinite 1.5s;
+  }
+
+  @keyframes cornerPulse {
+    0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 4px var(--accent)); }
+    50%      { opacity: 0.9; filter: drop-shadow(0 0 10px var(--accent)); }
+  }
+
+
+5. TYPOGRAFIE
+================================================================================
+
+  Font:             'Segoe UI', system-ui, sans-serif
+  Font mono:        'JetBrains Mono', 'Fira Code', monospace
+  Font smoothing:   -webkit-font-smoothing: antialiased
+  Feature settings: font-feature-settings: 'kern' 1, 'liga' 1
+
+  Velikosti:
+    xs:   11px     (timestamps, hintiky)
+    sm:   12px     (popisky, labely)
+    base: 14px     (hlavni text, zpravy)
+    md:   15px
+    lg:   16px     (nadpisy)
+    xl:   18px
+    2xl:  20px     (velke nadpisy)
+
+  Vahy:
+    normal:    400   (bezny text)
+    medium:    500   (labely)
+    semibold:  600   (nadpisy, titulky)
+    bold:      700   (jmena, tagy)
+    extrabold: 800   (tag badges, sekce)
+
+  Letter-spacing:
+    tight:     -0.025em
+    normal:    0
+    wide:      0.5px    (labely, uppercase texty)
+    wider:     1px      (titulky panelu)
+    widest:    2px      (section headers)
+
+
+6. TLACITKA & INTERAKTIVNI ELEMENTY
+================================================================================
+
+  -- Zakladni tlacitko (icon button):
+  .btn {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    border-color: var(--accent);
+    box-shadow: 0 0 20px -5px var(--accent);
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  .btn:active {
+    transform: translateY(0) scale(0.95);
+  }
+
+  .btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    box-shadow: 0 0 25px -5px var(--accent);
+  }
+
+  -- Toggle checkbox (custom switch):
+  .toggle {
+    width: 40px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 11px;
+  }
+  .toggle:checked {
+    background: var(--accent);
+    box-shadow: 0 0 20px -5px var(--accent);
+  }
+  .toggle::before {
+    /* 16x16 bily kruh, posun o 18px kdyz checked */
+  }
+
+  -- Slider (range input):
+  Track:  rgba(255, 255, 255, 0.1), vyska 6px, radius 3px
+  Thumb:  var(--accent), 16x16, kruh, border 2px solid #fff
+  Hover:  scale(1.2), box-shadow: 0 0 20px var(--accent)
+
+
+7. BADGE / TAG SYSTEM
+================================================================================
+
+  Pro zobrazeni typu (HP, ARMOR, HUNGER, apod.):
+
+  .tag {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.75px;
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  }
+
+  -- 3D efekt - inset svetlo nahore, stin dole
+  -- Barva pozadi = barva typu (zelena pro HP, modra pro armor, atd.)
+  -- Na hover: scale(1.05) + silnejsi shadow
+
+
+8. PROGRESS BARY (PRO HUD - HP, ARMOR, HUNGER, THIRST...)
+================================================================================
+
+  Doporuceny styl pro progress bary:
+
+  .progress-container {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    height: 8px;        /* nebo 6px pro thin verzi */
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, var(--bar-color), var(--bar-color-light));
+    box-shadow: 0 0 10px var(--bar-color);
+    transition: width 0.3s ease;
+  }
+
+  /* Glow verze: */
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3)
+    );
+    border-radius: 0 5px 5px 0;
+  }
+
+  Barvy baru:
+    HP:       #4ade80 -> #22c55e   (zelena)
+    Armor:    #60a5fa -> #3b82f6   (modra)
+    Hunger:   #fb923c -> #f97316   (oranzova)
+    Thirst:   #38bdf8 -> #0ea5e9   (cyan)
+    Stamina:  #fbbf24 -> #eab308   (zluta)
+    Stress:   #f87171 -> #ef4444   (cervena)
+
+  Kriticke hodnoty (<25%):
+    animation: criticalPulse 1.5s ease-in-out infinite;
+    @keyframes criticalPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+
+9. ANIMACE & PRECHODY
+================================================================================
+
+  -- Zakladni easings:
+  ease-smooth:     cubic-bezier(0.25, 0.1, 0.25, 1)
+  ease-bounce:     cubic-bezier(0.34, 1.56, 0.64, 1)
+  ease-elastic:    cubic-bezier(0.68, -0.6, 0.32, 1.6)
+
+  -- Durations:
+  fast:    100ms   (hover efekty)
+  normal:  200ms   (prechody, fade)
+  slow:    300ms   (slide, scale)
+  slower:  500ms   (velke animace)
+
+  -- Vstupni animace elementu:
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  -- Zmizeni (fade out se slide):
+  @keyframes fadeOut {
+    0%   { opacity: 1; transform: translateX(0); }
+    70%  { opacity: 0.3; }
+    100% { opacity: 0; transform: translateX(-20px); }
+  }
+
+  -- Focus/active pulse:
+  @keyframes focusPulse {
+    0%, 100% {
+      box-shadow: 0 4px 30px rgba(0,0,0,0.6),
+                  0 0 30px -10px var(--accent),
+                  inset 0 0 20px -12px var(--accent);
+    }
+    50% {
+      box-shadow: 0 4px 30px rgba(0,0,0,0.7),
+                  0 0 50px -5px var(--accent),
+                  inset 0 0 35px -8px var(--accent);
+    }
+  }
+
+  -- Stagger delay pro seznamy:
+  .item:nth-child(1) { animation-delay: 0ms; }
+  .item:nth-child(2) { animation-delay: 30ms; }
+  .item:nth-child(3) { animation-delay: 60ms; }
+  /* ... +30ms pro kazdy dalsi */
+
+
+10. SCROLLBAR
+================================================================================
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent) 0%, rgba(accent, 0.4) 100%);
+    border-radius: 4px;
+    box-shadow: 0 0 15px var(--accent);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  ::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Firefox: */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(accent, 0.5) rgba(255, 255, 255, 0.03);
+
+
+11. HUD LAYOUT DOPORUCENI
+================================================================================
+
+  Rozmisteni HUD elementu na obrazovce:
+
+  +--------------------------------------------------+
+  |  [Chat]                              [Minimap]   |
+  |  left:20px                           right:20px  |
+  |  top:40px                            top:40px    |
+  |                                                  |
+  |                                                  |
+  |                                                  |
+  |                                                  |
+  |  [Status Bars]                    [Vehicle HUD]  |
+  |  left:20px                        right:20px     |
+  |  bottom:20px                      bottom:200px   |
+  |                                                  |
+  |  [HP][ARM][HUN][THI]              [Speed]        |
+  |  bottom:20px                      [Fuel]         |
+  |                                   [Engine]       |
+  +--------------------------------------------------+
+
+  -- Status bary: horizontalni, pod sebou, sirka 200-280px
+  -- Vehicle HUD: vertikalni stack, vpravo dole
+  -- Notifikace: vpravo nahore, stack shora dolu
+
+  Z-index scala:
+    HUD bary:      100
+    Chat:          1000
+    Dropdowns:     1001
+    Settings:      10001
+    Notifications: 5000
+
+
+12. NOTIFIKACNI SYSTEM
+================================================================================
+
+  .notification {
+    /* Pouzij zakladni glass panel */
+    background: linear-gradient(135deg, rgba(15,20,35,0.92), rgba(25,32,50,0.88));
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+
+    /* Levy accent border: */
+    border-left: 3px solid var(--notification-color);
+  }
+
+  Typy:
+    info:     --notification-color: #3b82f6
+    success:  --notification-color: #4ade80
+    warning:  --notification-color: #fbbf24
+    error:    --notification-color: #ef4444
+    police:   --notification-color: #3b82f6 + cerveny pulse
+
+
+13. KRITICKE EFEKTY (LOW HP, WANTED, atd.)
+================================================================================
+
+  -- Low HP (<25%):
+  border-left: 3px solid #ef4444;
+  animation: criticalPulse 2s ease-in-out infinite;
+
+  @keyframes criticalPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(239,68,68,0.3); }
+    50%      { box-shadow: 0 0 25px rgba(239,68,68,0.5); }
+  }
+
+  -- Wanted level:
+  Pocet hvezd = pocet pulzujicich elementu
+  Barva: #dc2626 (cervena) s glow efektem
+
+
+14. VLASTNI CSS PROMENNE (KONFIGUROVATELNE)
+================================================================================
+
+  Tyto promenne uzivatele muzou menit pres nastaveni:
+
+  --accent:            barva akcentu (hex)
+  --accent-rgb:        RGB hodnoty pro rgba()
+  --bg-opacity:        pruhlednost pozadi (0-1)
+  --blur:              sila backdrop blur (0-20px)
+  --radius:            zaobleni rohu (0-24px)
+  --rotation:          rotace panelu (-15 az 15deg)
+  --skew-x:            horizontalni nakloneni (-10 az 10deg)
+  --skew-y:            vertikalni nakloneni (-10 az 10deg)
+  --corner-size:       velikost rohovych dekoraci (5-50px)
+  --corner-thickness:  tloustka rohu (1-4px)
+  --corner-display:    block/none
+  --corner-glow:       drop-shadow filter / none
+  --animation-duration: 0.3s nebo 0s (vypnute animace)
+
+
+15. COPY-PASTE SABLONA PRO NOVY HUD ELEMENT
+================================================================================
+
+  <div class="hud-element">
+    <div class="corner-tl"></div>
+    <div class="corner-br"></div>
+
+    <div class="hud-header">
+      <span class="hud-title">ELEMENT NAME</span>
+    </div>
+
+    <div class="hud-content">
+      <!-- obsah -->
+    </div>
+  </div>
+
+  <style>
+  .hud-element {
+    position: fixed;
+    /* left/right/top/bottom dle pozice */
+
+    background: linear-gradient(
+      135deg,
+      rgba(15, 20, 35, 0.65) 0%,
+      rgba(25, 32, 50, 0.6) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #ffffff;
+    overflow: hidden;
+  }
+
+  .corner-tl {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 25px;
+    height: 25px;
+    border-top: 2px solid var(--accent, #10b981);
+    border-left: 2px solid var(--accent, #10b981);
+    pointer-events: none;
+    opacity: 0.7;
+    filter: drop-shadow(0 0 6px var(--accent, #10b981));
+    animation: cornerPulse 3s ease-in-out infinite;
+  }
+
+  .corner-br {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 25px;
+    height: 25px;
+    border-bottom: 2px solid var(--accent, #10b981);
+    border-right: 2px solid var(--accent, #10b981);
+    pointer-events: none;
+    opacity: 0.7;
+    filter: drop-shadow(0 0 6px var(--accent, #10b981));
+    animation: cornerPulse 3s ease-in-out infinite 1.5s;
+  }
+
+  .hud-header {
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .hud-title {
+    color: var(--accent, #10b981);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px var(--accent, #10b981);
+  }
+
+  .hud-content {
+    padding: 12px 14px;
+  }
+
+  @keyframes cornerPulse {
+    0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 4px var(--accent, #10b981)); }
+    50%      { opacity: 0.9; filter: drop-shadow(0 0 10px var(--accent, #10b981)); }
+  }
+  </style>
+
+
+================================================================================
+  POZNAMKY
+================================================================================
+
+  - Vzdy testuj na tmavem pozadi (FiveM hra je tmava)
+  - Pouzivej rgba() misto hex pro pozadi (pruhlednost!)
+  - Backdrop-filter: blur() je narocny na GPU - nepouzivej prilis mnoho vrstev
+  - Animace pouzivej strridme - v hre je vykon dulezity
+  - Barvy akcentu se muzou menit pres nastaveni - pouzivej var(--accent)
+  - Pro FiveM: vsechno je v NUI (CEF browser), takze funguje CSS3 + modern JS
