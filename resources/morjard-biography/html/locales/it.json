@@ -1,0 +1,14 @@
+{
+  "Biography": "Biografia",
+  "Name": "Nome",
+  "Surname": "Cognome",
+  "Total Hours": "Ore totali",
+  "Total Days": "Giorni totali",
+  "Jobs": "Lavori",
+  "Job History": "Storico lavori",
+  "Close": "Chiudi",
+  "View by server id:": "Visualizza per ID server:",
+  "View": "Visualizza",
+  "no_data": "Nessun dato di biografia disponibile per questo giocatore.",
+  "player_offline": "Quel giocatore è offline o non trovato."
+}

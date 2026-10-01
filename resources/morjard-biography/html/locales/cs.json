@@ -1,0 +1,14 @@
+{
+  "Biography": "Životopis",
+  "Name": "Jméno",
+  "Surname": "Příjmení",
+  "Total Hours": "Celkem hodin",
+  "Total Days": "Celkem dní",
+  "Jobs": "Práce",
+  "Job History": "Historie pracovních pozic",
+  "Close": "Zavřít",
+  "View by server id:": "Zobrazit podle server ID:",
+  "View": "Zobrazit",
+  "no_data": "Pro tohoto hráče nejsou k dispozici žádné údaje.",
+  "player_offline": "Hráč je offline nebo nebyl nalezen."
+}

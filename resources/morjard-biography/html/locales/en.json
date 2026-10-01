@@ -1,0 +1,14 @@
+{
+  "Biography": "Biography",
+  "Name": "Name",
+  "Surname": "Surname",
+  "Total Hours": "Total Hours",
+  "Total Days": "Total Days",
+  "Jobs": "Jobs",
+  "Job History": "Job History",
+  "Close": "Close",
+  "View by server id:": "View by server id:",
+  "View": "View",
+  "no_data": "No biography data available for this player.",
+  "player_offline": "That player is offline or not found."
+}

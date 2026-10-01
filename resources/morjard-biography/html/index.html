@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Biography</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="container" style="display:none">
+    <div class="header">
+      <h1 id="title">Biography</h1>
+      <div class="controls">
+        <select id="langSelect"></select>
+        <button id="closeBtn">Close</button>
+      </div>
+    </div>
+
+    <div id="content" class="content">
+      <div id="message" class="message"></div>
+
+      <div id="bio" style="display:none">
+        <div class="row">
+          <strong id="nameLabel">Name:</strong> <span id="nameVal"></span>
+        </div>
+        <div class="row">
+          <strong id="surnameLabel">Surname:</strong> <span id="surnameVal"></span>
+        </div>
+        <div class="row">
+          <strong id="totalHoursLabel">Total Hours:</strong> <span id="totalHoursVal"></span>
+        </div>
+        <div class="row">
+          <strong id="totalDaysLabel">Total Days:</strong> <span id="totalDaysVal"></span>
+        </div>
+        <hr />
+        <h2 id="jobsTitle">Jobs</h2>
+        <ul id="jobsList"></ul>
+        <h2 id="historyTitle">Job History</h2>
+        <ul id="historyList"></ul>
+      </div>
+
+      <div class="footer">
+        <label id="viewByIdLabel">View player by Server ID:</label>
+        <input id="playerIdInput" type="number" placeholder="server id">
+        <button id="viewBtn">View</button>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
