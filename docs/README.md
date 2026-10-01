@@ -52,3 +52,13 @@ Viz [`FINDING_spawn_selector_integration.md`](FINDING_spawn_selector_integration
 - `morjard_target` — 2 `Wait(0)` smyčky prověřeny, obě standardní vzory (raycast polling, aktivní target-UI smyčka) — žádná oprava potřeba.
 - DB dotazy: žádný skutečný N+1 vzor nenalezen (`GeneratePhoneNumber`/`GenerateBankAccount` mají omezenou retry smyčku max 20×, jen při vzniku postavy — v pořádku). `players` tabulka má zatím jen 3 řádky (dev server), takže JSON_EXTRACT bez indexu teď není problém — zmíněno jako „hlídat při růstu", ne řešit teď.
 - TODO/FIXME sweep přes celý projekt — nic nedokončeného nenalezeno mimo již vyřešené.
+
+## Vizuální audit (headless screenshot pass, 2026-10-01)
+
+Otevřel jsem skutečná NUI (headless Chrome, `dev.html` preview kde existuje, jinak nasimulovaná `open` zpráva) a reálně se podíval, co se vykresluje — ne jen co píše kód. Výsledky:
+
+- **`morjard-loadingscreen` — 2 skutečné chyby nalezené a opravené, nasazeno na živý server:**
+  1. Logo i hlavní nadpis natvrdo zobrazovaly „DDCZ" — `applyLocale()` dělal `L.server_name.replace('Morjard','DDCZ')`, tedy aktivně přepisoval už správná lokalizační data zpátky na DDCZ. Oprava: zobrazuje se `Morjard`.
+  2. Ukazatel procenta načítání uměl spadnout hluboko do záporu (až „-667 %" v testu, „-402 %"/"-2 %" na screenshotech) — `animPct()` ořezávala `t` jen nahoru (`Math.min(...,1)`), ne dolů; reprodukováno jak pod virtuálním, tak reálným časem prohlížeče. Opraveno `Math.max(0, Math.min(...,1))`.
+- **`morjard-multicharacter` — 1 drobná chyba v dev-preview nástroji** (netýká se živých hráčů — reálné headshoty jdou přes `RegisterPedheadshot`, jiný mechanismus): placeholder SVG obrázky měly barvy zapsané jako `%23XXXXXX` přímo ve zdroji a pak ještě jednou prošly `encodeURIComponent()` — dvojité enkódování, neplatná barva, obrázek se nevykreslil. Opraveno.
+- **`morjard-spawn-selector`, `rp-chat`, `morjard-biography`** — vizuálně v pořádku po properním otestování (přes HTTP server, ne `file://` — ten blokuje ES moduly a `backdrop-filter` vypadá jinak bez skutečné hry za sebou, což mě zpočátku zmátlo). Chat správně ukazuje hybridní Morjard styl (zelená/oranžová paleta). Biography UI se vykresluje správně po přijetí `open` zprávy — a „View by server id" tlačítko v UI jde přes stejnou opravenou bezpečnostní cestu jako `/biography` příkaz, takže je kryté.
