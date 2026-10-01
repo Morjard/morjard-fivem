@@ -415,9 +415,9 @@ setTimeout(() => {
 setTimeout(() => {
     // Use placeholder headshot images for dev preview — warm ember tones
     const placeholders = [
-        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="%230F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="%23F97316" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="%23F97316" opacity="0.2"/></svg>'),
-        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="%230F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="%23FBBF24" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="%23FBBF24" opacity="0.2"/></svg>'),
-        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="%230F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="%23EF4444" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="%23EF4444" opacity="0.2"/></svg>'),
+        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="#0F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="#F97316" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="#F97316" opacity="0.2"/></svg>'),
+        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="#0F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="#FBBF24" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="#FBBF24" opacity="0.2"/></svg>'),
+        'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect fill="#0F0D0B" width="128" height="128"/><circle cx="64" cy="48" r="24" fill="#EF4444" opacity="0.3"/><ellipse cx="64" cy="110" rx="35" ry="28" fill="#EF4444" opacity="0.2"/></svg>'),
     ];
     mockCharacters.forEach((ch, i) => {
         window.postMessage({
