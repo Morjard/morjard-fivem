@@ -14,6 +14,7 @@ Nová čistá složka (`~/Plocha/morjard-fivem/`), oddělená od rozházeného `
 | `morjard-spawn-selector` | nahráno na server, **neaktivováno** (`ensure` nikdy neproběhlo — viz "Propojení" níže) |
 | `morjard-connector` | ✅ nasazeno — **bezpečnostní oprava 2026-10-01**: `mcp_api_key` byl slabý/uhodnutelný, otočen na 256bitový náhodný klíč, viz `SECURITY_morjard_connector.md` |
 | `morjard-settings` | ✅ nasazeno, hybridní přepínač stylu Morjard/DDCZ, viz `HYBRID_STYLE.md` |
+| `morjard-biography` | ✅ nasazeno — **bezpečnostní oprava 2026-10-01**: `/biography <id>` a NUI požadavek šly zavolat na kohokoliv bez omezení (žádný distance/permission check), navíc samostatná díra v `GetByCitizen` QBCore callbacku (dosažitelný síťově přímo podle citizenid, i na offline hráče). Opraveno, viz commit `626ddfd`. |
 
 **DDCZ loading screen ani jiný DDCZ-brandovaný obsah sem záměrně nešel** — jediné, co bylo „psáno jako ddcz" a přesto patří dovnitř, byl `morjard_target` (interně `ddcz_target`), a ten je přejmenovaný.
 
@@ -33,7 +34,10 @@ Viz [`FINDING_spawn_selector_integration.md`](FINDING_spawn_selector_integration
 
 ## Bezpečnost
 
-Viz [`SECURITY_morjard_connector.md`](SECURITY_morjard_connector.md) — nalezený a opravený živý nález (slabý klíč chránící endpoint se vzdáleným spouštěním Lua kódu, dostupný z internetu).
+- [`SECURITY_morjard_connector.md`](SECURITY_morjard_connector.md) — slabý klíč chránící endpoint se vzdáleným spouštěním Lua kódu, dostupný z internetu. Opraveno.
+- `morjard-biography` — chybějící autorizace na `/biography <id>` + NUI request + `GetByCitizen` callback (viz tabulka výše). Opraveno.
+- Prošlé a v pořádku: `morjard-whitelist` (server-side `playerConnecting`/`deferrals`, nejde obejít z klienta), `morjard-doorlock` (plná autorizační logika — ACE/skupina/předmět/passcode, žádné slepé důvěřování klientovi).
+- `QBCore:Server:TriggerCallback` je plný `RegisterNetEvent` — **jakýkoliv** `QBCore.Functions.CreateCallback`-registrovaný název je síťově dosažitelný přímo od libovolného klienta, ne jen z důvěryhodného server kódu. Při psaní nového callbacku v libovolném morjard resource na tohle myslet a validovat `source`/vlastnictví dat uvnitř callbacku samotného, ne spoléhat na to, že ho "volá jen server".
 
 ## Provozní poznámky (zjištěno 2026-10-01)
 
