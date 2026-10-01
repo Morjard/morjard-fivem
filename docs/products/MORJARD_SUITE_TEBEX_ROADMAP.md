@@ -2,6 +2,22 @@
 
 **2026-10-01, aktualizováno** po nálezu existující přípravné práce v `~/Plocha/morjard/prompts/` (23 hotových generačních promptů) a `~/Plocha/morjard/morjard-studio/` (vlastní AI IDE + asset pipeline). Tenhle plán teď vychází primárně z TOHO, ne z nápadů odvozených jen z GitHub průzkumu — viz [`../reference/COMMUNITY_RESOURCES_2026.md`](../reference/COMMUNITY_RESOURCES_2026.md) pro ten průzkum, používá se už jen jako doplněk na chybějící kategorie (sekce 5).
 
+## 📦 Stav implementace (2026-10-02, finální)
+
+Repo: `~/Plocha/morjard-fivem/tebex-suite/` (vlastní git repo), **37 resources celkem**, všechny commitnuté samostatně s vysvětlujícím message + master `README.md` + konsolidovaný install bundle (`tools/build-install-bundle.sh`). **Všech 21 z 23 promptů ze sekce 2 hotovo** + `morjard-bridge` (sekce 3) + **všech 14 doplňkových produktů** ze sekce 5 bez hotového promptu (navrženo od nuly). Zbylé 2 z 23: `spawn-selector` už žije samostatně (viz sekce 0), `storm-system` záměrně odloženo jako rozšíření `morjard-weathersystem`, ne nový resource (viz sekce 7, bod 8).
+
+Hotovo ze sekce 2 (21/21 dostupných): admin-alert, admin-menu, banking, bodycam, delivery, diving, drug-business, emotes, gym, helicam, house-robbery, hud, jobs-system, mdt, multijob, outfit-bag, pause-menu, radio, telefon (phone), towing, vehicle-keys.
+
+Hotovo ze sekce 5 (14/14 bez Hydry, bez hotového promptu, navrženo od nuly): Scoreboard, Impound, Garages, Crypto, Marriage, Perf Dashboard, Dealership, Gang Territories, Businesses, Dispatch, EMS, Bank/Store Heist (odlišný od house-robbery), Housing (exteriérové vlastnictví + stash, vědomě bez custom MLO interiérů — chybí assety), **Inventory** (Ember NUI nad ox_inventory jako reálným enginem — drop-in reskin technicky nejde kvůli per-resource NUI scoping ve FXServer, takže je to tenký wrapper nad reálnými ox_inventory exporty, ne konkurenční engine).
+
+Jediné, co zbývá: **Hydra jako produkt** — reálný, už nasazený kernel-level anti-cheat (`~/Plocha/morjard/hydra/`, `~/Plocha/fivem-ovh-resources/hydra/`), vědomě neřešeno bez přímého vstupu uživatele — licencování a co z toho ukázat zákazníkům je rozhodnutí majitele, ne něco k odhadu při balení živého security softwaru.
+
+Metodika u každého resource: syntax ověřen (`luac -p` / `node --check`), u resources postavených subagenty nezávisle re-ověřeny klíčové tvrzení přímým grepem do kódu (ne jen převzaty z reportu), vizuálně otestováno přes headless Chrome screenshot kde má NUI, README dokumentuje odchylky od promptu/designová rozhodnutí/reálné nalezené bugy, nic nefalšováno tam, kde FXServer nemá reálný nativ (viz např. perfdash's tick-drift místo fiktivního CPU%, gym/ems's "buffs actually implemented" sekce).
+
+Hotovo ze sekce 5 (5/14, bez hotového promptu, menší rozsah): Scoreboard, Impound (export API pro MDT), Garages (sdílí `player_vehicles` s vehiclekeys/MDT), Crypto (simulovaný trh, export pro Phone), Marriage (export API pro budoucí Biography integraci). Zbývá: Inventory, Housing, Dealership, EMS, Dispatch, Bank/Store Robbery, Gang Territories, Businesses, Perf Dashboard, Hydra-jako-produkt — všechno Flagship-scale, srovnatelné rozsahem s Banking/Jobs, žádné zatím nezačaté.
+
+Každý hotový resource: syntax ověřen (`luac -p` / `node --check`), vizuálně otestován přes headless Chrome screenshot kde má NUI, README dokumentuje odchylky od promptu a reálné nalezené bugy, commitnuto samostatně do `tebex-suite` repa s vysvětlujícím commit message.
+
 Cíl: produkty prodávané na Tebexu, co fungují **jak na QBCore, tak na Qbox (qbx_core)** ze stejného kódu, v Morjard designu, s výkonem/stabilitou jako hlavní odlišovací hodnotou.
 
 ## ⚠️ Stáří zdrojového materiálu
