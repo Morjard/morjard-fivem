@@ -46,6 +46,11 @@ Viz [`FINDING_spawn_selector_integration.md`](FINDING_spawn_selector_integration
 - `hardcap` (stock Cfx.re resource, limituje hráče dle `sv_maxclients`) je v `server.cfg` `ensure`ovaný, ale aktuálně neběží — `sv_maxclients` samotné ale vynucuje už jádro FXServer, takže to není bezpečnostní díra, jen chybějící vedlejší resource. Needs plný restart k opravě, ne prioritní.
 - `nn_lib`/`nn_interaction`/`0r_lib`/`es-antibackdoor` jsou v `server.cfg` záměrně zakomentované (licence/false positivy) — není to chyba.
 
+## server.cfg nálezy (2026-10-01)
+
+- **`mysql_connection_string` byl nastaven dvakrát** — řádek 27 (správně, s `?charset=utf8mb4`) a řádek 157 uvnitř pozdějšího „Morjard Editor" bloku (bez charset parametru, omylem zkopírováno bez něj). Pozdější `set` v `server.cfg` vítězí, takže **efektivně server celou dobu běžel bez explicitního utf8mb4** — riziko tichého poškození dat u emoji/některých znaků (stejná třída chyby jako dřív nalezený NFD/NFC diakritický bug v AutoBazaru). Opraveno — odstraněn duplicitní/špatný řádek, zálohováno (`server.cfg.bak-*`), aplikováno přes plný restart serveru (0 hráčů).
+- **Duplicitní, ale neaktivní složky** `ox_lib`/`oxmysql` v `[editor]/` (vedle aktivních v rootu/`[standalone]/`) — `[editor]` kategorie se neensure'uje jako celek (jen `ensure morjard-editor` jmenovitě), takže tyhle kopie nikdy neběží. Neškodný bordel na disku, ne bug — ponecháno beze změny.
+
 ## Optimalizace (průběžný sweep, 2026-10-01)
 
 - `morjard-weathersystem` — už má dřívější optimalizace v kódu (komentáře „FIX: Was Wait(0)…"), zbylé 2 `Wait(0)` smyčky prověřeny a jsou legitimní (earthquake shake, zombie spawn — obě krátké/podmíněné, ne trvalý busy-loop).
