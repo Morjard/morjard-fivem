@@ -2,12 +2,20 @@ local QBCore = exports['qb-core']:GetCoreObject()
 
 -- Hybrid style (Morjard / DDCZ, see ../morjard-settings). Safe no-op if that
 -- resource isn't present/started -- the UI then keeps its own default palette.
+-- Retries: both resources start via the same `ensure [category]` line in
+-- server.cfg with no guaranteed order, so a single immediate attempt could
+-- silently give up forever if morjard-settings happens to start a moment
+-- later (found 2026-10-01).
 CreateThread(function()
-    local ok, style = pcall(function()
-        return exports['morjard-settings']:GetStyle()
-    end)
-    if ok and style then
-        SendNUIMessage({ type = 'applyMorjardStyle', style = style })
+    for _ = 1, 10 do
+        local ok, style = pcall(function()
+            return exports['morjard-settings']:GetStyle()
+        end)
+        if ok and style then
+            SendNUIMessage({ type = 'applyMorjardStyle', style = style })
+            return
+        end
+        Wait(250)
     end
 end)
 
