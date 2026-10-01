@@ -364,7 +364,7 @@ window.addEventListener('message', function (event) {
         <i class="fas fa-shield-halved logo-icon"></i>
       </div>
       <div class="logo-texts">
-        <div class="logo-title">DD<span class="hi">CZ</span></div>
+        <div class="logo-title">Mor<span class="hi">jard</span></div>
         <div class="logo-sub">ROLEPLAY &middot; FIVEM PLATFORM</div>
       </div>
     </div>
@@ -392,7 +392,7 @@ window.addEventListener('message', function (event) {
         <div class="cb tl"></div><div class="cb tr"></div><div class="cb bl"></div><div class="cb br"></div>
         <div class="id-inner">
           <div>
-            <div class="srv-name" id="srvName">DD<span class="hi">CZ</span> ROLEPLAY</div>
+            <div class="srv-name" id="srvName">Mor<span class="hi">jard</span> ROLEPLAY</div>
             <div class="srv-tag" id="srvTag">// INDEPENDENT CZECH ROLEPLAY SERVER &middot; FIVEM PLATFORM</div>
           </div>
           <div class="srv-stats">
@@ -719,7 +719,7 @@ const $  = id => document.getElementById(id);
 /* ── Apply locale ── */
 function applyLocale() {
     $('statusOnline').textContent = L.status_online;
-    $('srvName').innerHTML = L.server_name.replace('Morjard','DD<span class="hi">CZ</span>');
+    $('srvName').innerHTML = L.server_name.replace('Morjard','Mor<span class="hi">jard</span>');
     $('srvTag').textContent  = L.server_tagline;
     $('lbl-uptime').textContent  = L.stat_uptime;
     $('lbl-lang').textContent    = L.stat_lang;
@@ -841,7 +841,12 @@ function setSegs(p) {
 function animPct(from,to,dur=350) {
     const t0=performance.now();
     (function tick(now){
-        const t=Math.min((now-t0)/dur,1), cur=Math.round(from+(to-from)*t);
+        // Clamp both ends: an un-clamped lower bound let `t` go negative whenever
+        // `now < t0` (observed with overlapping animPct() calls -- a later call's
+        // rAF tick can still be in flight when an earlier call's tick fires), which
+        // pulled `cur` far below 0 (e.g. displaying "-402%"). Found 2026-10-01 via
+        // a headless screenshot pass, reproduced under both virtual and real time.
+        const t=Math.max(0, Math.min((now-t0)/dur,1)), cur=Math.round(from+(to-from)*t);
         $('pct').textContent=cur+'%'; $('progFill').style.width=cur+'%'; setSegs(cur); pct=cur;
         if(t<1) requestAnimationFrame(tick);
     })(performance.now());
