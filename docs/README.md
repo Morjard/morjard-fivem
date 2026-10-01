@@ -1,36 +1,50 @@
 # morjard-fivem — konsolidovaný, vyčištěný FiveM balíček
 
-Nová čistá složka (`~/Plocha/morjard-fivem/`), oddělená od rozházeného `~/Plocha/morjard/`. Vzniklo 2026-10-01 na základě projetí `~/Plocha/morjard` a živého FiveM serveru na OVH (`a3fc644c`, read-only — žádný zápis na server v tomto kroku).
+Nová čistá složka (`~/Plocha/morjard-fivem/`), oddělená od rozházeného `~/Plocha/morjard/`. Vzniklo 2026-10-01 na základě projetí `~/Plocha/morjard` a živého FiveM serveru na OVH (`a3fc644c`).
 
-## Co je uvnitř (`resources/`)
+## Co je uvnitř (`resources/`) — stav k 2026-10-01
 
-| Resource | Zdroj (novější verze) | Stav |
-|---|---|---|
-| `rp-chat` | OVH server (24.9., novější než lokál 21.3.) | ✅ čistý, propojen s hybridním stylem (viz níž) |
-| `morjard_target` | OVH server (23.9.) | ✅ **opraveno**: interně byl pořád `ddcz_target` (manifest „DDCZ Dev Team", exporty/eventy `ddcz_target:...`) — přejmenováno na `morjard_target` všude |
-| `morjard-weathersystem` | OVH server | beze změny, obsahuje už dřívější optimalizace (viz níž) |
-| `morjard-multicharacter` | shodné na obou stranách | beze změny, čistý |
-| `morjard-loadingscreen` | OVH server (skutečně nasazená verze z `[standalone]`) | beze změny, čistý |
-| `morjard-spawn-selector` | pouze lokálně, na serveru vůbec není | beze změny, čistý |
-| `morjard-connector` | lokálně | beze změny, čistý (1 starý `.b64` screenshot se slovem „ddcz" uvnitř obrázku, neškodné) |
-| **`morjard-settings`** | nově vytvořeno | hybridní přepínač stylu Morjard/DDCZ, viz `docs/HYBRID_STYLE.md` |
+| Resource | Stav |
+|---|---|
+| `rp-chat` | ✅ nasazeno, propojeno s hybridním stylem |
+| `morjard_target` | ✅ nasazeno, přejmenováno z interního `ddcz_target` (manifest, exporty, eventy) |
+| `morjard-weathersystem` | ✅ beze změny, obsahuje dřívější optimalizace (viz níž) |
+| `morjard-multicharacter` | ✅ nasazeno, **propojení na `morjard-spawn-selector` dokončeno** (viz níž) |
+| `morjard-loadingscreen` | ✅ nasazeno, hybridní styl přes `GetConvar` (jiný vzor, viz `HYBRID_STYLE.md`) |
+| `morjard-spawn-selector` | nahráno na server, **neaktivováno** (`ensure` nikdy neproběhlo — viz "Propojení" níže) |
+| `morjard-connector` | ✅ nasazeno — **bezpečnostní oprava 2026-10-01**: `mcp_api_key` byl slabý/uhodnutelný, otočen na 256bitový náhodný klíč, viz `SECURITY_morjard_connector.md` |
+| `morjard-settings` | ✅ nasazeno, hybridní přepínač stylu Morjard/DDCZ, viz `HYBRID_STYLE.md` |
 
-**DDCZ loading screen ani jiný DDCZ-brandovaný obsah sem záměrně nešel** — jediné, co bylo „psáno jako ddcz" a přesto patří dovnitř, byl `morjard_target` (interně `ddcz_target`), a ten je teď přejmenovaný.
+**DDCZ loading screen ani jiný DDCZ-brandovaný obsah sem záměrně nešel** — jediné, co bylo „psáno jako ddcz" a přesto patří dovnitř, byl `morjard_target` (interně `ddcz_target`), a ten je přejmenovaný.
 
 ## Hybridní styl (Morjard / DDCZ)
 
-Viz [`HYBRID_STYLE.md`](HYBRID_STYLE.md). V kostce: `resources/morjard-settings/shared/settings.lua` → `Config.ActiveStyle = 'morjard' | 'ddcz'`, reálné palety z vašich vlastních starších (DDCZ) a současných (Morjard) zdrojů. Zapojeno a funkčně ověřeno v `rp-chat`. Čeká na zapojení do `morjard-loadingscreen`, `morjard-multicharacter`, `morjard-spawn-selector` (stejný vzor, viz docs).
+Viz [`HYBRID_STYLE.md`](HYBRID_STYLE.md). `resources/morjard-settings/shared/settings.lua` → `Config.ActiveStyle = 'morjard' | 'ddcz'`. Zapojeno a nasazeno ve `rp-chat`, `morjard-multicharacter`, `morjard-spawn-selector`, `morjard-loadingscreen`.
 
-**Slovo „ddcz" v `morjard-settings` a v téhle dokumentaci je záměrné** — je to jméno jednoho ze dvou volitelných stylů, přesně jak jsi chtěl. To je jiná věc než DDCZ branding uvnitř resource metadat (ten jsem odstranil z `morjard_target`).
+**Slovo „ddcz" v `morjard-settings` a v téhle dokumentaci je záměrné** — je to jméno jednoho ze dvou volitelných stylů. To je jiná věc než DDCZ branding uvnitř resource metadat (ten je odstraněný z `morjard_target`).
 
-## Nasazení na server (zatím NEUDĚLÁNO)
+## Propojení multicharacter → spawn-selector (2026-10-01, dokončeno)
 
-Nic z tohohle jsem na OVH server nezapsal — jen jsem z něj četl/stahoval. Až budeš chtít nasadit (hlavně přejmenovaný `morjard_target` a nový `morjard-settings`), řekni a udělám to s zálohou a bez restartu běžící hry, pokud to půjde za chodu (resource restart `morjard_target` ano, `ensure morjard-settings` přidat do `server.cfg`).
+Viz [`FINDING_spawn_selector_integration.md`](FINDING_spawn_selector_integration.md) pro historii nálezu. Řešení: `morjard-multicharacter/config.lua` → `Config.UseSpawnSelector` (**default `false`** — zero dopad na současné hráče). Když zapnuto:
+- `html/app.js`: tlačítko „Play" přeskočí vestavěný spawn modal, pošle `selectCharacter` s `spawnLocation: null`.
+- `client/main.lua`: po načtení postavy (`QBCore:Client:OnPlayerLoaded`, jednorázový listener) spustí `TriggerEvent('morjard-spawnselector:open')` — `morjard-spawn-selector` sám dokončí pozicování (vlastní kamera/fade, nepotřebuje nic dalšího od multicharacteru).
 
-## Další krok: optimalizace (probíhá průběžně)
+**Aby to fungovalo živě, potřeba ještě**: aktivovat `morjard-spawn-selector` v `server.cfg` (`ensure morjard-spawn-selector`) a přepnout `Config.UseSpawnSelector = true`. Oboje záměrně NEUDĚLÁNO — žádní hráči online k živému otestování celého průchodu výběr postavy → spawn, a `ensure` nového resource má historii zaseknutí serveru (viz níže), takže chce opatrný test s hráčem, ne slepé nasazení.
 
-Rychlý první průzkum už něco ukázal:
-- `morjard-weathersystem` **už má** dřívější optimalizace zdokumentované přímo v kódu (komentáře „FIX: Was Wait(0)… now Wait(200)" na 5 místech) — zbývají 2 aktivní `Wait(0)` smyčky k prověření (řádky 460, 897).
-- `morjard_target` má 2 aktivní `Wait(0)` smyčky (`utils.lua:20`, `main.lua:167`) — kandidáti na snížení zátěže, potřebují prověřit logiku každé zvlášť (ne slepě zvýšit interval).
+## Bezpečnost
 
-Pokračuju v tomhle průchodu přes JS/Lua napříč resources (latence, zbytečné natives ve smyčkách, zbytné výpočty) bez čekání na další pokyn.
+Viz [`SECURITY_morjard_connector.md`](SECURITY_morjard_connector.md) — nalezený a opravený živý nález (slabý klíč chránící endpoint se vzdáleným spouštěním Lua kódu, dostupný z internetu).
+
+## Provozní poznámky (zjištěno 2026-10-01)
+
+- **`ensure <nový-resource>` přes websocket konzoli je nespolehlivé** — command se часто „odešle", ale nic se nestane (potvrzeno opakovaně: `morjard-settings` při prvním nasazení, `hardcap` nyní). Funguje jistě jen **plný restart serveru** (power signal), ne jednotlivý `ensure`/`refresh` příkaz. `restart <existující-resource>` naopak funguje spolehlivě.
+- **Restart serveru se občas zasekne ve stavu "stopping"** (pozorováno 2×) — řeší se `kill` signálem přes Pelican API (bezpečné při 0 hráčích, ověřeno bez ztráty dat).
+- `hardcap` (stock Cfx.re resource, limituje hráče dle `sv_maxclients`) je v `server.cfg` `ensure`ovaný, ale aktuálně neběží — `sv_maxclients` samotné ale vynucuje už jádro FXServer, takže to není bezpečnostní díra, jen chybějící vedlejší resource. Needs plný restart k opravě, ne prioritní.
+- `nn_lib`/`nn_interaction`/`0r_lib`/`es-antibackdoor` jsou v `server.cfg` záměrně zakomentované (licence/false positivy) — není to chyba.
+
+## Optimalizace (průběžný sweep, 2026-10-01)
+
+- `morjard-weathersystem` — už má dřívější optimalizace v kódu (komentáře „FIX: Was Wait(0)…"), zbylé 2 `Wait(0)` smyčky prověřeny a jsou legitimní (earthquake shake, zombie spawn — obě krátké/podmíněné, ne trvalý busy-loop).
+- `morjard_target` — 2 `Wait(0)` smyčky prověřeny, obě standardní vzory (raycast polling, aktivní target-UI smyčka) — žádná oprava potřeba.
+- DB dotazy: žádný skutečný N+1 vzor nenalezen (`GeneratePhoneNumber`/`GenerateBankAccount` mají omezenou retry smyčku max 20×, jen při vzniku postavy — v pořádku). `players` tabulka má zatím jen 3 řádky (dev server), takže JSON_EXTRACT bez indexu teď není problém — zmíněno jako „hlídat při růstu", ne řešit teď.
+- TODO/FIXME sweep přes celý projekt — nic nedokončeného nenalezeno mimo již vyřešené.
