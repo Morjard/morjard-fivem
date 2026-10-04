@@ -20,7 +20,7 @@ local function SaveMinutesForPlayer(src, minutes)
     local citizenid = info.citizenid
     local job = info.job or 'unknown'
 
-    MySQL.query('SELECT * FROM morjard-biography WHERE citizenid = ?', { citizenid }, function(result)
+    MySQL.query('SELECT * FROM morjard_biography WHERE citizenid = ?', { citizenid }, function(result)
         if not result then return end
         local row = result[1]
         if row then
@@ -51,7 +51,7 @@ local function SaveMinutesForPlayer(src, minutes)
             -- keep history bounded to last 50 entries
             while #history > 50 do table.remove(history) end
 
-            MySQL.update('UPDATE morjard-biography SET firstname = ?, lastname = ?, total_minutes = ?, jobs = ?, job_history = ?, updated_at = NOW() WHERE citizenid = ?',
+            MySQL.update('UPDATE morjard_biography SET firstname = ?, lastname = ?, total_minutes = ?, jobs = ?, job_history = ?, updated_at = NOW() WHERE citizenid = ?',
                 { info.firstname, info.lastname, newTotal, json.encode(jobs), json.encode(history), citizenid }, function(affected)
                     -- ok
                 end)
@@ -59,7 +59,7 @@ local function SaveMinutesForPlayer(src, minutes)
             -- create new row
             local jobs = { [job] = minutes }
             local history = { { job = job, minutes_added = minutes, time = os.time() } }
-            MySQL.insert('INSERT INTO morjard-biography (citizenid, firstname, lastname, total_minutes, jobs, job_history) VALUES (?, ?, ?, ?, ?, ?)',
+            MySQL.insert('INSERT INTO morjard_biography (citizenid, firstname, lastname, total_minutes, jobs, job_history) VALUES (?, ?, ?, ?, ?, ?)',
                 { citizenid, info.firstname, info.lastname, minutes, json.encode(jobs), json.encode(history) }, function(id)
                     -- inserted
                 end)
@@ -106,7 +106,7 @@ local function SendBiographyTo(requesterSrc, target)
     end
     local citizenid = targetPlayer.PlayerData.citizenid
 
-    MySQL.query('SELECT * FROM morjard-biography WHERE citizenid = ?', { citizenid }, function(result)
+    MySQL.query('SELECT * FROM morjard_biography WHERE citizenid = ?', { citizenid }, function(result)
         if not result then return end
         local row = result[1]
         if not row then
@@ -178,7 +178,7 @@ QBCore.Functions.CreateCallback('morjard-biography:GetByCitizen', function(sourc
     if not citizenid then cb(nil); return end
     local requester = QBCore.Functions.GetPlayer(source)
     if not requester or requester.PlayerData.citizenid ~= citizenid then cb(nil); return end
-    MySQL.query('SELECT * FROM morjard-biography WHERE citizenid = ?', { citizenid }, function(result)
+    MySQL.query('SELECT * FROM morjard_biography WHERE citizenid = ?', { citizenid }, function(result)
         if not result then cb(nil); return end
         local row = result[1]
         if not row then cb(nil); return end
@@ -233,7 +233,7 @@ RegisterNetEvent('morjard-biography:server:SetName', function(firstname, lastnam
     local finalFirst = cleanFirst or info.firstname
     local finalLast = cleanLast or info.lastname
 
-    MySQL.update('UPDATE morjard-biography SET firstname = ?, lastname = ? WHERE citizenid = ?', { finalFirst, finalLast, info.citizenid }, function(affected)
+    MySQL.update('UPDATE morjard_biography SET firstname = ?, lastname = ? WHERE citizenid = ?', { finalFirst, finalLast, info.citizenid }, function(affected)
         -- updated
     end)
 end)
