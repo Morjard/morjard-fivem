@@ -1,0 +1,5 @@
+RegisterNetEvent('morjard-inventory-devtest:ack', function(kind)
+    local msg = ('[devtest] fired: %s'):format(tostring(kind))
+    TriggerEvent('chat:addMessage', { color = { 120, 200, 255 }, args = { 'INV-DEVTEST', msg } })
+    print(msg)
+end)
