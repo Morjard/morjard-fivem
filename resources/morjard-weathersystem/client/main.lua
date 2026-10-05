@@ -170,8 +170,8 @@ end)
 -- ============================================================
 function UpdateWidget()
     if not showWidget then return end
-    local zoneName = (currentZone and Config.WeatherZones[currentZone]) and Config.WeatherZones[currentZone].name or 'Unknown'
-    local wLabel, icon, wind = 'Unknown', 'sun', 0
+    local zoneName = (currentZone and Config.WeatherZones[currentZone]) and Config.WeatherZones[currentZone].name or 'Neznámá'
+    local wLabel, icon, wind = 'Neznámé', 'sun', 0
     if currentWeatherState and Config.WeatherTypes[currentWeatherState] then
         local wd = Config.WeatherTypes[currentWeatherState]
         wLabel, icon, wind = wd.label, wd.icon, wd.windSpeed or 0
@@ -1068,8 +1068,8 @@ RegisterNetEvent('morjard-weather:client:openPlayerTablet', function()
         }
     end
 
-    local zoneName = (currentZone and Config.WeatherZones[currentZone]) and Config.WeatherZones[currentZone].name or 'Unknown'
-    local wLabel, icon, wind = 'Unknown', 'sun', 0
+    local zoneName = (currentZone and Config.WeatherZones[currentZone]) and Config.WeatherZones[currentZone].name or 'Neznámá'
+    local wLabel, icon, wind = 'Neznámé', 'sun', 0
     local wType = 'CLEAR'
     if currentWeatherState and Config.WeatherTypes[currentWeatherState] then
         local wd = Config.WeatherTypes[currentWeatherState]
@@ -1137,6 +1137,20 @@ AddEventHandler('onResourceStop', function(resource)
         menuOpen = false
         playerTabletOpen = false
         SetNuiFocus(false, false)
+    end
+    activeSpecialEvent = nil
+    ClearOverrideWeather()
+    ClearWeatherTypePersist()
+    ClearTimecycleModifier()
+    SetArtificialLightsState(false)
+    StopGameplayCamShaking(true)
+    StopSandParticles()
+    StopAllParticles()
+    StopColdAnim()
+    if tsunamiActive or waterLoaded then
+        ResetWater()
+        SetVehiclePopulationBudget(3)
+        SetPedPopulationBudget(3)
     end
 end)
 

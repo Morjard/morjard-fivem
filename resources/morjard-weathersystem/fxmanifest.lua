@@ -68,23 +68,11 @@ files {
     'vfx/vfxlightningsettings.xml',
 }
 
--- Rain (RAIN / THUNDER) — realistic drops + fog
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/rainstorm_render_drop.xml'
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/rainstorm_render_ground.xml'
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/rainstorm_render_mist.xml'
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/rainstorm_emitter_mist.xml'
--- Thunderstorm (THUNDER) — more intense drops
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/thunder_render_drop.xml'
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/thunder_render_ground.xml'
--- Desert / Sandy Shores
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/desert_render_ground.xml'
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/desert_emitter_ground.xml'
--- Pollen (SMOG weather)
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/pollen_render_drop.xml'
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/pollen_emitter_drop.xml'
--- Fireflies (CLEAR at night)
-data_file 'PTXGPU_SETTINGS_FILE' 'vfx/firefly_render_drop.xml'
--- Lightning (THUNDER) — realistic branched lightning
-data_file 'VFX_LIGHTNING_SETTINGS_FILE' 'vfx/vfxlightningsettings.xml'
+-- NOTE: VFX particle/lightning XML overrides CANNOT be registered via `data_file`.
+-- Those `data_file` entries (PTXGPU_SETTINGS_FILE / VFX_LIGHTNING_SETTINGS_FILE) are not
+-- recognized by FiveM — they spam "invalid type" in client log. These particle definitions
+-- live inside common.rpf and are read by rage::fwVfxManager at init; the only override path
+-- is to ship a replacement RPF under `stream/` with the mirrored common/data/effects path.
+-- The XMLs themselves stay in `files` so they can still be inspected / loaded by Lua code.
 
 lua54 'yes'

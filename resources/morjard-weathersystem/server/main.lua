@@ -62,7 +62,7 @@ local function checkSecurity(src)
     d.count = d.count + 1
     if d.count > Config.Security.maxRequestsPerMinute then
         if Config.Security.kickOnExploit then
-            DropPlayer(src, 'Security: Too many requests')
+            DropPlayer(src, 'Ochrana: příliš mnoho požadavků')
         end
         if Config.Security.logExploits then
             print('^1[Morjard-Security] Player ' .. src .. ' exceeded rate limit^7')
@@ -248,7 +248,7 @@ RegisterNetEvent('morjard-weather:server:weather', function(zoneId, weatherType)
     if not checkSecurity(src) then return end
     if not QBCore.Functions.HasPermission(src, 'admin') then return end
     if setWeather(zoneId, weatherType) then
-        TriggerClientEvent('QBCore:Notify', src, 'Weather set: ' .. weatherType, 'success')
+        TriggerClientEvent('QBCore:Notify', src, 'Počasí nastaveno: ' .. (Config.WeatherTypes[weatherType].label or weatherType), 'success')
     end
 end)
 
@@ -350,16 +350,16 @@ end)
 -- ============================================================
 -- COMMANDS
 -- ============================================================
-QBCore.Commands.Add('weathermenu', 'Open weather control menu (admin)', {}, false, function(src)
+QBCore.Commands.Add('weathermenu', 'Otevřít ovládání počasí (admin)', {}, false, function(src)
     TriggerClientEvent('morjard-weather:client:menu', src)
 end, 'admin')
 
-QBCore.Commands.Add('syncweather', 'Force sync all weather (admin)', {}, false, function(src)
+QBCore.Commands.Add('syncweather', 'Vynutit synchronizaci počasí (admin)', {}, false, function(src)
     if not QBCore.Functions.HasPermission(src, 'admin') then return end
     for zoneId, data in pairs(weatherData) do
         TriggerClientEvent('morjard-weather:client:forceWeatherSync', -1, zoneId, data)
     end
-    TriggerClientEvent('QBCore:Notify', src, 'Force synced!', 'success')
+    TriggerClientEvent('QBCore:Notify', src, 'Počasí synchronizováno!', 'success')
 end, 'admin')
 
 -- Cleanup on disconnect

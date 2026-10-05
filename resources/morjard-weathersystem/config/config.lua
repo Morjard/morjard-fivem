@@ -8,7 +8,7 @@ Config.Debug = false
 --  Dostupné / Available: 'en', 'cs', 'de', 'fr', 'ru', 'ua', 'ja', 'es', 'it'
 --  Překlady jsou v: locales/<jazyk>.lua
 -- ============================================================
-Config.Locale = 'en'
+Config.Locale = 'cs'
 
 -- ============================================================
 --  BEZPEČNOST / SECURITY
@@ -101,21 +101,21 @@ Config.PermanentWeatherZones = {
 --  canTransitionTo = do jakého počasí může přejít dynamicky
 -- ============================================================
 Config.WeatherTypes = {
-    ['EXTRASUNNY'] = { label='Extra Sunny',   icon='sun',        rainLevel=0.0, windSpeed=0.0,  fogLevel=0.0, temperature=30, tempMin=26, tempMax=36, canTransitionTo={'CLEAR','CLOUDS'} },
-    ['CLEAR']      = { label='Clear Sky',     icon='sun',        rainLevel=0.0, windSpeed=5.0,  fogLevel=0.0, temperature=25, tempMin=20, tempMax=28, canTransitionTo={'EXTRASUNNY','CLOUDS','CLEARING'} },
-    ['CLOUDS']     = { label='Cloudy',        icon='cloud',      rainLevel=0.0, windSpeed=10.0, fogLevel=0.1, temperature=18, tempMin=14, tempMax=22, canTransitionTo={'CLEAR','OVERCAST','RAIN','FOGGY'} },
-    ['OVERCAST']   = { label='Overcast',      icon='cloud',      rainLevel=0.0, windSpeed=15.0, fogLevel=0.2, temperature=15, tempMin=10, tempMax=18, canTransitionTo={'CLOUDS','RAIN','THUNDER','FOGGY'} },
-    ['RAIN']       = { label='Rain',          icon='cloud-rain', rainLevel=0.3, windSpeed=20.0, fogLevel=0.3, temperature=13, tempMin=8,  tempMax=16, canTransitionTo={'OVERCAST','THUNDER','CLEARING'} },
-    ['THUNDER']    = { label='Thunderstorm',  icon='cloud-bolt', rainLevel=0.5, windSpeed=30.0, fogLevel=0.5, temperature=12, tempMin=7,  tempMax=15, canTransitionTo={'RAIN','CLEARING','OVERCAST'} },
-    ['CLEARING']   = { label='Clearing',      icon='cloud-sun',  rainLevel=0.1, windSpeed=15.0, fogLevel=0.1, temperature=20, tempMin=16, tempMax=24, canTransitionTo={'CLEAR','CLOUDS','OVERCAST'} },
-    ['FOGGY']      = { label='Foggy',         icon='smog',       rainLevel=0.0, windSpeed=5.0,  fogLevel=0.8, temperature=12, tempMin=8,  tempMax=16, canTransitionTo={'CLOUDS','OVERCAST','CLEAR'} },
+    ['EXTRASUNNY'] = { label='Velmi slunečno', icon='sun',        rainLevel=0.0, windSpeed=0.0,  fogLevel=0.0, temperature=30, tempMin=26, tempMax=36, canTransitionTo={'CLEAR','CLOUDS'} },
+    ['CLEAR']      = { label='Jasno',         icon='sun',        rainLevel=0.0, windSpeed=5.0,  fogLevel=0.0, temperature=25, tempMin=20, tempMax=28, canTransitionTo={'EXTRASUNNY','CLOUDS','CLEARING'} },
+    ['CLOUDS']     = { label='Oblačno',       icon='cloud',      rainLevel=0.0, windSpeed=10.0, fogLevel=0.1, temperature=18, tempMin=14, tempMax=22, canTransitionTo={'CLEAR','OVERCAST','RAIN','FOGGY'} },
+    ['OVERCAST']   = { label='Zataženo',      icon='cloud',      rainLevel=0.0, windSpeed=15.0, fogLevel=0.2, temperature=15, tempMin=10, tempMax=18, canTransitionTo={'CLOUDS','RAIN','THUNDER','FOGGY'} },
+    ['RAIN']       = { label='Déšť',          icon='cloud-rain', rainLevel=0.3, windSpeed=20.0, fogLevel=0.3, temperature=13, tempMin=8,  tempMax=16, canTransitionTo={'OVERCAST','THUNDER','CLEARING'} },
+    ['THUNDER']    = { label='Bouřka',        icon='cloud-bolt', rainLevel=0.5, windSpeed=30.0, fogLevel=0.5, temperature=12, tempMin=7,  tempMax=15, canTransitionTo={'RAIN','CLEARING','OVERCAST'} },
+    ['CLEARING']   = { label='Vyjasňování',   icon='cloud-sun',  rainLevel=0.1, windSpeed=15.0, fogLevel=0.1, temperature=20, tempMin=16, tempMax=24, canTransitionTo={'CLEAR','CLOUDS','OVERCAST'} },
+    ['FOGGY']      = { label='Mlha',          icon='smog',       rainLevel=0.0, windSpeed=5.0,  fogLevel=0.8, temperature=12, tempMin=8,  tempMax=16, canTransitionTo={'CLOUDS','OVERCAST','CLEAR'} },
     ['SMOG']       = { label='Smog',          icon='smog',       rainLevel=0.0, windSpeed=2.0,  fogLevel=0.6, temperature=23, tempMin=20, tempMax=28, canTransitionTo={'FOGGY','OVERCAST','CLEAR'} },
-    ['SNOW']       = { label='Snow',          icon='snowflake',  rainLevel=0.0, windSpeed=15.0, fogLevel=0.2, temperature=-2, tempMin=-6, tempMax=1,  canTransitionTo={'SNOWLIGHT','BLIZZARD','CLOUDS'} },
-    ['BLIZZARD']   = { label='Blizzard',      icon='wind',       rainLevel=0.0, windSpeed=40.0, fogLevel=0.7, temperature=-8, tempMin=-14,tempMax=-4, canTransitionTo={'SNOW','SNOWLIGHT','CLOUDS'} },
-    ['SNOWLIGHT']  = { label='Light Snow',    icon='snowflake',  rainLevel=0.0, windSpeed=10.0, fogLevel=0.1, temperature=0,  tempMin=-3, tempMax=3,  canTransitionTo={'SNOW','CLOUDS','CLEAR'} },
-    ['XMAS']       = { label='Christmas',     icon='snowflake',  rainLevel=0.0, windSpeed=5.0,  fogLevel=0.0, temperature=-1, tempMin=-4, tempMax=2,  canTransitionTo={'XMAS'} },
-    ['HALLOWEEN']  = { label='Sandstorm Sky', icon='smog',       rainLevel=0.0, windSpeed=25.0, fogLevel=0.5, temperature=28, tempMin=24, tempMax=35, canTransitionTo={'SMOG','OVERCAST'} },
-    ['NEUTRAL']    = { label='Neutral',       icon='cloud',      rainLevel=0.0, windSpeed=5.0,  fogLevel=0.0, temperature=20, tempMin=16, tempMax=24, canTransitionTo={'CLEAR','CLOUDS'} },
+    ['SNOW']       = { label='Sníh',          icon='snowflake',  rainLevel=0.0, windSpeed=15.0, fogLevel=0.2, temperature=-2, tempMin=-6, tempMax=1,  canTransitionTo={'SNOWLIGHT','BLIZZARD','CLOUDS'} },
+    ['BLIZZARD']   = { label='Vánice',        icon='wind',       rainLevel=0.0, windSpeed=40.0, fogLevel=0.7, temperature=-8, tempMin=-14,tempMax=-4, canTransitionTo={'SNOW','SNOWLIGHT','CLOUDS'} },
+    ['SNOWLIGHT']  = { label='Slabé sněžení', icon='snowflake',  rainLevel=0.0, windSpeed=10.0, fogLevel=0.1, temperature=0,  tempMin=-3, tempMax=3,  canTransitionTo={'SNOW','CLOUDS','CLEAR'} },
+    ['XMAS']       = { label='Vánoce',        icon='snowflake',  rainLevel=0.0, windSpeed=5.0,  fogLevel=0.0, temperature=-1, tempMin=-4, tempMax=2,  canTransitionTo={'XMAS'} },
+    ['HALLOWEEN']  = { label='Prašná obloha', icon='smog',       rainLevel=0.0, windSpeed=25.0, fogLevel=0.5, temperature=28, tempMin=24, tempMax=35, canTransitionTo={'SMOG','OVERCAST'} },
+    ['NEUTRAL']    = { label='Neutrální',     icon='cloud',      rainLevel=0.0, windSpeed=5.0,  fogLevel=0.0, temperature=20, tempMin=16, tempMax=24, canTransitionTo={'CLEAR','CLOUDS'} },
 }
 
 -- ============================================================
@@ -130,7 +130,7 @@ Config.WeatherZones = {
         radius      = 2500.0,
         weather     = 'CLEAR',
         temperature = 26,
-        description = 'Downtown, Airport, Del Perro, Vinewood',
+        description = 'Centrum, letiště, Del Perro, Vinewood',
     },
     {
         name        = 'Sandy Shores Desert',
@@ -138,7 +138,7 @@ Config.WeatherZones = {
         radius      = 2000.0,
         weather     = 'EXTRASUNNY',
         temperature = 32,
-        description = 'Sandy Shores, Grand Senora Desert',
+        description = 'Sandy Shores, poušť Grand Senora',
     },
     {
         name        = 'Paleto Bay',
@@ -146,7 +146,7 @@ Config.WeatherZones = {
         radius      = 1500.0,
         weather     = 'CLOUDS',
         temperature = 18,
-        description = 'Paleto Bay, Paleto Forest',
+        description = 'Paleto Bay, les Paleto',
     },
     {
         name        = 'Grapeseed Area',
@@ -162,7 +162,7 @@ Config.WeatherZones = {
         radius      = 1200.0,
         weather     = 'XMAS',
         temperature = -1,
-        description = 'Mount Chiliad Peak — vždy sníh',
+        description = 'Vrchol Mount Chiliad — vždy sníh',
     },
 }
 

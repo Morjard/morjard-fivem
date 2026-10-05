@@ -68,14 +68,20 @@ local function SaveMinutesForPlayer(src, minutes)
 end
 
 -- Periodic tick from client
+local lastTick = {}
+
 RegisterNetEvent('morjard-biography:server:SaveTick', function()
     local src = source
+    local now = GetGameTimer()
+    if lastTick[src] and now - lastTick[src] < (Config.TickInterval or 60000) * 0.9 then return end
+    lastTick[src] = now
     SaveMinutesForPlayer(src, 1) -- increment by 1 minute per tick
 end)
 
 -- Manual save (on drop or forced)
 AddEventHandler('playerDropped', function(reason)
     local src = source -- note: in playerDropped handler, `source` is not set - use limited info. We will not rely on this to save; clients send one last tick on disconnect.
+    lastTick[src] = nil
 end)
 
 -- Shared by both entry points below (command and NUI->event). Looking up your own
@@ -94,7 +100,7 @@ local function SendBiographyTo(requesterSrc, target)
         end
         local dist = #(GetEntityCoords(requesterPed) - GetEntityCoords(targetPed))
         if dist > (Config.MaxLookupDistance or 5.0) then
-            TriggerClientEvent('QBCore:Notify', requesterSrc, 'Player is too far away', 'error')
+            TriggerClientEvent('QBCore:Notify', requesterSrc, 'Hráč je příliš daleko', 'error')
             return
         end
     end
@@ -142,10 +148,10 @@ local function SendBiographyTo(requesterSrc, target)
 end
 
 -- Command to open a biography (own or other player's by server ID)
-QBCore.Commands.Add(Config.Command, 'Open biography (use player id to view other players, online only)', {{name = 'id', help = 'player server id (optional)'}}, false, function(source, args)
+QBCore.Commands.Add(Config.Command, 'Otevřít životopis (s ID hráče zobrazíš cizí, jen online)', {{name = 'id', help = 'server ID hráče (volitelné)'}}, false, function(source, args)
     local target = tonumber(args[1]) or source
     if not QBCore.Functions.GetPlayer(target) then
-        TriggerClientEvent('QBCore:Notify', source, 'Player not found or offline', 'error')
+        TriggerClientEvent('QBCore:Notify', source, 'Hráč nebyl nalezen nebo je offline', 'error')
         return
     end
     SendBiographyTo(source, target)
@@ -159,10 +165,10 @@ RegisterNetEvent('morjard-biography:server:RequestBiography', function(targetSrc
 end)
 
 -- Server command to force-save a player's current minute (for debugging/admins)
-QBCore.Commands.Add('biosave', 'Force save biography minute for yourself', {}, false, function(source, args)
+QBCore.Commands.Add('biosave', 'Vynutit uložení minuty do životopisu', {}, false, function(source, args)
     SaveMinutesForPlayer(source, 1)
-    TriggerClientEvent('QBCore:Notify', source, 'Biography saved (1 minute)', 'success')
-end, 'user')
+    TriggerClientEvent('QBCore:Notify', source, 'Životopis uložen (1 minuta)', 'success')
+end, 'admin')
 
 -- Allow other server resources to fetch biography via QBCore callback.
 -- Security: QBCore's callback system (QBCore:Server:TriggerCallback) is a plain

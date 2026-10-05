@@ -105,6 +105,8 @@ end)
 RegisterNetEvent('morjard-connector:asyncResult')
 AddEventHandler('morjard-connector:asyncResult', function(requestId, data)
     if not requestId then return end
+    local entry = asyncResults[requestId]
+    if not entry or entry.status ~= 'pending' or entry.target ~= tonumber(source) then return end
     setAsyncResult(requestId, data)
 end)
 
@@ -413,7 +415,7 @@ local function handleExecLua(body, res)
             return
         end
         local requestId = genRequestId()
-        asyncResults[requestId] = { status = 'pending', ts = os.time() }
+        asyncResults[requestId] = { status = 'pending', ts = os.time(), target = tonumber(playerId) }
         TriggerClientEvent('morjard-connector:execClient', playerId, requestId, code)
         jsonResponse(res, 200, { requestId = requestId })
     end
@@ -439,7 +441,7 @@ local function handleReloadScript(body, res)
             return
         end
         local requestId = genRequestId()
-        asyncResults[requestId] = { status = 'pending', ts = os.time() }
+        asyncResults[requestId] = { status = 'pending', ts = os.time(), target = tonumber(playerId) }
         TriggerClientEvent('morjard-connector:reloadClient', playerId, requestId, parsed.resource, parsed.file)
         jsonResponse(res, 200, { requestId = requestId })
     end
@@ -448,7 +450,7 @@ end
 --- POST /mcp/screenshot — Request game screenshot from client
 local function handleScreenshot(body, res)
     local ok, parsed = pcall(json.decode, body)
-    if not ok then parsed = {} end
+    if not ok or type(parsed) ~= 'table' then parsed = {} end
 
     local playerId = parsed.playerId or getFirstPlayer()
     if not playerId then
@@ -457,7 +459,7 @@ local function handleScreenshot(body, res)
     end
 
     local requestId = genRequestId()
-    asyncResults[requestId] = { status = 'pending', ts = os.time() }
+    asyncResults[requestId] = { status = 'pending', ts = os.time(), target = tonumber(playerId) }
     TriggerClientEvent('morjard-connector:requestScreenshot', playerId, requestId, {
         encoding = parsed.encoding or 'png',
         quality = parsed.quality or 0.85,
@@ -468,7 +470,7 @@ end
 --- POST /mcp/entities — Request entity scan from client
 local function handleEntities(body, res)
     local ok, parsed = pcall(json.decode, body)
-    if not ok then parsed = {} end
+    if not ok or type(parsed) ~= 'table' then parsed = {} end
 
     local playerId = parsed.playerId or getFirstPlayer()
     if not playerId then
@@ -477,7 +479,7 @@ local function handleEntities(body, res)
     end
 
     local requestId = genRequestId()
-    asyncResults[requestId] = { status = 'pending', ts = os.time() }
+    asyncResults[requestId] = { status = 'pending', ts = os.time(), target = tonumber(playerId) }
     TriggerClientEvent('morjard-connector:getEntities', playerId, requestId, {
         radius = parsed.radius or 100,
         types = parsed.types,
@@ -500,7 +502,7 @@ local function handleCamera(body, res)
     end
 
     local requestId = genRequestId()
-    asyncResults[requestId] = { status = 'pending', ts = os.time() }
+    asyncResults[requestId] = { status = 'pending', ts = os.time(), target = tonumber(playerId) }
     TriggerClientEvent('morjard-connector:cameraControl', playerId, requestId, parsed)
     jsonResponse(res, 200, { requestId = requestId })
 end
@@ -520,7 +522,7 @@ local function handlePed(body, res)
     end
 
     local requestId = genRequestId()
-    asyncResults[requestId] = { status = 'pending', ts = os.time() }
+    asyncResults[requestId] = { status = 'pending', ts = os.time(), target = tonumber(playerId) }
     TriggerClientEvent('morjard-connector:pedControl', playerId, requestId, parsed)
     jsonResponse(res, 200, { requestId = requestId })
 end
@@ -528,7 +530,7 @@ end
 --- POST /mcp/interior — Interior debug from client
 local function handleInterior(body, res)
     local ok, parsed = pcall(json.decode, body)
-    if not ok then parsed = {} end
+    if not ok or type(parsed) ~= 'table' then parsed = {} end
 
     local playerId = parsed.playerId or getFirstPlayer()
     if not playerId then
@@ -537,7 +539,7 @@ local function handleInterior(body, res)
     end
 
     local requestId = genRequestId()
-    asyncResults[requestId] = { status = 'pending', ts = os.time() }
+    asyncResults[requestId] = { status = 'pending', ts = os.time(), target = tonumber(playerId) }
     TriggerClientEvent('morjard-connector:getInterior', playerId, requestId)
     jsonResponse(res, 200, { requestId = requestId })
 end
@@ -669,6 +671,32 @@ local function requestAddress(req)
     return tostring(a or ''):match('^[%d%.]+') or tostring(a or '')
 end
 
+local function constantTimeEquals(a, b)
+    if #a ~= #b then return false end
+    local diff = 0
+    for i = 1, #a do
+        diff = diff | (string.byte(a, i) ~ string.byte(b, i))
+    end
+    return diff == 0
+end
+
+local MAX_BODY_BYTES = 1024 * 1024
+
+local function withBody(req, res, handler)
+    local declared = tonumber(req.headers['Content-Length'] or req.headers['content-length'])
+    if declared and declared > MAX_BODY_BYTES then
+        jsonResponse(res, 413, { ok = false, error = 'Request body too large' })
+        return
+    end
+    req.setDataHandler(function(body)
+        if body and #body > MAX_BODY_BYTES then
+            jsonResponse(res, 413, { ok = false, error = 'Request body too large' })
+            return
+        end
+        handler(body, res)
+    end)
+end
+
 SetHttpHandler(function(req, res)
     -- Fail closed. This connector exposes administrative and code-execution
     -- endpoints, so an omitted key must never turn authentication off.
@@ -697,8 +725,8 @@ SetHttpHandler(function(req, res)
         print(('[morjard-connector] accepting %s %s from %s'):format(req.method or 'GET', req.path or '/', requestAddress(req)))
     end
 
-    local reqKey = req.headers['X-MCP-Key'] or req.headers['x-mcp-key'] or ''
-    if reqKey ~= apiKey then
+    local reqKey = tostring(req.headers['X-MCP-Key'] or req.headers['x-mcp-key'] or '')
+    if not constantTimeEquals(reqKey, apiKey) then
         res.writeHead(401, { ['Content-Type'] = 'application/json' })
         res.send(json.encode({ error = 'Unauthorized' }))
         return
@@ -759,39 +787,39 @@ SetHttpHandler(function(req, res)
     -- POST routes
     if method == 'POST' then
         if path == '/mcp/command' then
-            req.setDataHandler(function(body) handleCommand(body, res) end)
+            withBody(req, res, handleCommand)
             return
 
         elseif path == '/mcp/exec-lua' then
-            req.setDataHandler(function(body) handleExecLua(body, res) end)
+            withBody(req, res, handleExecLua)
             return
 
         elseif path == '/mcp/reload-script' then
-            req.setDataHandler(function(body) handleReloadScript(body, res) end)
+            withBody(req, res, handleReloadScript)
             return
 
         elseif path == '/mcp/screenshot' then
-            req.setDataHandler(function(body) handleScreenshot(body, res) end)
+            withBody(req, res, handleScreenshot)
             return
 
         elseif path == '/mcp/entities' then
-            req.setDataHandler(function(body) handleEntities(body, res) end)
+            withBody(req, res, handleEntities)
             return
 
         elseif path == '/mcp/camera' then
-            req.setDataHandler(function(body) handleCamera(body, res) end)
+            withBody(req, res, handleCamera)
             return
 
         elseif path == '/mcp/ped' then
-            req.setDataHandler(function(body) handlePed(body, res) end)
+            withBody(req, res, handlePed)
             return
 
         elseif path == '/mcp/interior' then
-            req.setDataHandler(function(body) handleInterior(body, res) end)
+            withBody(req, res, handleInterior)
             return
 
         elseif path == '/mcp/state-bag' then
-            req.setDataHandler(function(body) handleStateBagWrite(body, res) end)
+            withBody(req, res, handleStateBagWrite)
             return
         end
     end

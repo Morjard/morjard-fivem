@@ -6,6 +6,7 @@ local msgSeq = 0 -- monotonic counter so every message gets a stable, unique id
 -- clicks can jump to the original on ANY viewer's screen, not just the
 -- sender's — each client used to mint its own random local id on receive)
 local lastTypingBroadcast = {} -- [source] = GetGameTimer(), server-side throttle safety net
+local lastAvatarUpload = {}
 local messageRecipients = {} -- [msgId] = { players = {...}, ts = GetGameTimer() } — who actually
 -- received a given message, so a later reaction toggle only re-broadcasts
 -- to people who could see the original (never wider than the message itself
@@ -50,6 +51,9 @@ AddEventHandler('rp-chat:updateAvatar', function(base64)
     if type(base64) ~= 'string' then return end
     if not base64:match('^data:image/') then return end
     if #base64 > 60000 then return end -- 128x128 PNG ~10-25KB
+    local now = GetGameTimer()
+    if lastAvatarUpload[src] and now - lastAvatarUpload[src] < 10000 then return end
+    lastAvatarUpload[src] = now
 
     avatarCache[src] = base64
 
@@ -91,6 +95,7 @@ AddEventHandler('playerDropped', function()
     avatarCache[source] = nil
     lastPmSender[source] = nil
     lastTypingBroadcast[source] = nil
+    lastAvatarUpload[source] = nil
 end)
 
 -- Cleanup old cooldowns every 5 minutes
@@ -154,7 +159,7 @@ local function GetCharacterName(source)
             end
         end
     end
-    return GetPlayerName(source) or 'Unknown'
+    return GetPlayerName(source) or 'Neznámý'
 end
 
 -- Same QBCore/ESX pcall-wrapped detection as GetCharacterName above, for
@@ -371,7 +376,7 @@ AddEventHandler('rp-chat:sendMessage', function(data)
     -- name when a framework is detected, Steam/Rockstar name otherwise.
     local playerName = GetCharacterName(source)
     if not playerName or playerName == '' then
-        playerName = 'Unknown'
+        playerName = 'Neznámý'
     end
 
     -- Validate and determine message type (server-side)
@@ -478,7 +483,9 @@ AddEventHandler('rp-chat:sendMessage', function(data)
         local rText = SanitizeText(data.replyTo.text)
         if #rName > 0 and #rText > 0 then
             if #rText > 100 then rText = string.sub(rText, 1, 100) end
-            replyTo = { id = data.replyTo.id, name = rName, text = rText }
+            local rId = data.replyTo.id
+            if type(rId) ~= 'string' or #rId > 32 then rId = nil end
+            replyTo = { id = rId, name = rName, text = rText }
         end
     end
 

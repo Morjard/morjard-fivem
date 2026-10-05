@@ -462,13 +462,20 @@ RegisterCommand('targetui', function(source, args)
             event = 'setTheme',
             theme = theme
         }))
-        lib.notify({ description = 'Theme set to ' .. theme, type = 'success' })
+        lib.notify({ description = 'Motiv nastaven na ' .. theme, type = 'success' })
     else
-        lib.notify({ description = 'Available themes: red, green, purple, orange, pink, default', type = 'inform' })
+        lib.notify({ description = 'Dostupné motivy: red, green, purple, orange, pink, default', type = 'inform' })
     end
 end, false)
 
-TriggerEvent('chat:addSuggestion', '/targetui', 'Change Morjard target UI theme', {
+TriggerEvent('chat:addSuggestion', '/targetui', 'Změnit motiv Morjard target UI', {
     { name="theme", help="red, green, purple, orange, pink, default" }
 })
 
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName ~= cache.resource then return end
+    if state.isNuiFocused() then
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
+    end
+end)

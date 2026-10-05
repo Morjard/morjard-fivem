@@ -9,8 +9,9 @@ end
 local function consume(source, item, itemName)
     local Player = QBCore.Functions.GetPlayer(source)
     if not Player then return nil end
-    if not Player.Functions.GetItemBySlot(item.slot) then return nil end
-    Player.Functions.RemoveItem(itemName, 1, item.slot)
+    local slotItem = Player.Functions.GetItemBySlot(item.slot)
+    if not slotItem or slotItem.name ~= itemName then return nil end
+    if not Player.Functions.RemoveItem(itemName, 1, item.slot) then return nil end
     return Player
 end
 

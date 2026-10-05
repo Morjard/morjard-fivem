@@ -28,6 +28,12 @@ RegisterNUICallback('requestBiography', function(data, cb)
     cb('ok')
 end)
 
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName == GetCurrentResourceName() and isOpen then
+        SetNuiFocus(false, false)
+    end
+end)
+
 -- Server will send UI data to open
 RegisterNetEvent('morjard-biography:client:OpenUI', function(payload)
     if payload.success == false then

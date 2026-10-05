@@ -280,6 +280,16 @@ AddEventHandler('morjard-connector:cameraControl', function(requestId, opts)
     TriggerServerEvent('morjard-connector:asyncResult', requestId, result)
 end)
 
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName ~= GetCurrentResourceName() or not _mcpCamera then return end
+    RenderScriptCams(false, false, 0, true, true)
+    DestroyCam(_mcpCamera, false)
+    _mcpCamera = nil
+    local ped = PlayerPedId()
+    FreezeEntityPosition(ped, false)
+    SetEntityVisible(ped, true, false)
+end)
+
 ---------------------------------------------------------------------------
 -- MCP: Ped Control
 ---------------------------------------------------------------------------

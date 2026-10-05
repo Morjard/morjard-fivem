@@ -4,6 +4,16 @@ const optionsWrapper = document.getElementById("options-wrapper");
 const body = document.body;
 const handIcon = document.querySelector("#hand i");
 
+function forEachOption(list, fn) {
+  if (Array.isArray(list)) {
+    list.forEach((data, i) => data && fn(data, i + 1));
+  } else if (list && typeof list === "object") {
+    for (const key in list) {
+      if (list[key]) fn(list[key], Number(key));
+    }
+  }
+}
+
 const savedTheme = localStorage.getItem("ox_target_theme");
 if (savedTheme) {
   body.setAttribute("data-theme", savedTheme);
@@ -28,18 +38,18 @@ window.addEventListener("message", (event) => {
 
       if (event.data.options) {
         for (const type in event.data.options) {
-          event.data.options[type].forEach((data, id) => {
-            createOptions(type, data, id + 1);
+          forEachOption(event.data.options[type], (data, id) => {
+            createOptions(type, data, id);
           });
         }
       }
 
       if (event.data.zones) {
-        for (let i = 0; i < event.data.zones.length; i++) {
-          event.data.zones[i].forEach((data, id) => {
-            createOptions("zones", data, id + 1, i + 1);
+        forEachOption(event.data.zones, (zone, zoneId) => {
+          forEachOption(zone, (data, id) => {
+            createOptions("zones", data, id, zoneId);
           });
-        }
+        });
       }
       break;
     }

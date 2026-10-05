@@ -63,7 +63,7 @@ local function GetCharacterName()
             return playerData.firstName .. ' ' .. (playerData.lastName or '')
         end
     end
-    return GetPlayerName(PlayerId()) or 'Unknown'
+    return GetPlayerName(PlayerId()) or 'Neznámý'
 end
 
 -- (na žádost uživatele — "vypisovaly příkazy, co na serveru existují") Real
@@ -195,7 +195,7 @@ RegisterCommand('+' .. Config.OpenKeyCommand, function()
     end
 end, false)
 RegisterCommand('-' .. Config.OpenKeyCommand, function() end, false)
-RegisterKeyMapping('+' .. Config.OpenKeyCommand, 'Open Chat', 'keyboard', Config.OpenKey)
+RegisterKeyMapping('+' .. Config.OpenKeyCommand, 'Otevřít chat', 'keyboard', Config.OpenKey)
 
 RegisterCommand('+chatOpenSlash', function()
     if not isFocused then
@@ -203,7 +203,7 @@ RegisterCommand('+chatOpenSlash', function()
     end
 end, false)
 RegisterCommand('-chatOpenSlash', function() end, false)
-RegisterKeyMapping('+chatOpenSlash', 'Open Chat (Command)', 'keyboard', 'SLASH')
+RegisterKeyMapping('+chatOpenSlash', 'Otevřít chat s příkazem', 'keyboard', 'SLASH')
 
 -- Plain, non-prefixed commands so the dev console / devcon can open chat
 -- reliably. `+chatOpen` above is a key-mapping command (invoked by key
@@ -378,7 +378,7 @@ AddEventHandler('chat:addMessage', function(data)
     local msg = {
         type = data.template or 'system',
         tag = 'SYSTEM',
-        name = type(data.args) == 'table' and data.args[1] or 'System',
+        name = type(data.args) == 'table' and data.args[1] or 'Systém',
         text = type(data.args) == 'table' and data.args[2] or (type(data.args) == 'string' and data.args or ''),
         color = Config.Colors.system
     }

@@ -1,4 +1,4 @@
-let currentLocale = 'en'
+let currentLocale = 'cs'
 let locales = {}
 
 async function loadLocale(lang) {
@@ -102,10 +102,15 @@ async function init() {
     applyTexts()
   })
 
-  document.getElementById('closeBtn').addEventListener('click', () => {
+  const closeUI = () => {
     const app = document.getElementById('app')
     if (app) app.style.display = 'none'
     fetch(`https://${GetParentResourceName()}/close`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+  }
+  document.getElementById('closeBtn').addEventListener('click', closeUI)
+  document.addEventListener('keyup', (e) => {
+    const app = document.getElementById('app')
+    if (e.key === 'Escape' && app && app.style.display !== 'none') closeUI()
   })
   document.getElementById('viewBtn').addEventListener('click', () => {
     const id = document.getElementById('playerIdInput').value
