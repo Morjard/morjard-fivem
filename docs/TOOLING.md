@@ -229,3 +229,14 @@ Používat když se nechci zahltit sám (např. 20min web lookup, 50-file audit 
 - `KEYEVENTF_VK` only v `/input/keyboard` → GTA DirectInput to ignoruje
 - `fivem://` protocol handler z SSH → nespustí FiveM když Session 0
 - Direct `curl http://192.168.1.144:9876` → 400 Invalid Hostname (http.sys)
+
+
+## 8. Lessons from in-game audit 2026-10-05
+
+- **`luac` na tomhle stroji je Lua 5.1** — FXServer je 5.4 (`goto`, integer division…). Syntax check vždy `luac5.4 -p`.
+- **Restart přes exec-lua vyžaduje ACE**: `add_ace resource.morjard-connector command allow` (server.cfg ř. 131). Bez toho `ExecuteCommand('restart X')` tiše nic. Po restartu vždy ověř `Started resource X` v logu.
+- **NUI CEF cache**: po změně `html/js|css` přidej `?v=<datum>` k include v index.html, jinak klient běží se starým JS i po restartu resource.
+- **NUI ready handshake**: Lua zprávy poslané hned po startu resource NUI zahodí (stránka se ještě načítá). Pokud plugin posílá „jen při změně“, data po restartu chybí. Vzor: JS po načtení `fetch('https://<res>/xxxReady')`, Lua callback vynuluje cache a pošle vše znovu (morjard-hud `hudReady`).
+- **Relativní URL v CSS proměnné nastavené z JS** se resolvuje vůči stylesheetu, ne stránce → v NUI používej absolutní `/html/...` (morjard-phone tapety).
+- **WmAgent `/input/mouse`**: `drag` bere `x,y,toX,toY`; double-click = `click` s `count:2`. `/input/keyboard {"key":"1"}` se do hry nedostal — herní zkratky testuj přes DevCon příkaz (`slot_1`, `phone`, `morjardinv`).
+- **Testovací předměty**: exec-lua `exports['qb-inventory']:AddItem(src, 'bandage', 5, false, false, 'devtest')`.
