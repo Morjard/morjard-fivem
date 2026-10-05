@@ -38,10 +38,19 @@ end
 Config.Styles = {
     morjard = {
         name           = 'Morjard',
-        accent         = '#10b981',          -- emerald green (default accent)
-        accentRgb      = '16, 185, 129',
-        accentAlt      = '#ff9a1f',           -- orange, "cyberpunk" variant some pages use
-        accentAltRgb   = '255, 154, 31',
+        -- Was '#10b981' (emerald green) -- a real brand-identity mismatch:
+        -- every other resource in this suite (phone, radio, HUD, EMS...)
+        -- uses the "Ember" palette's orange/gold directly in its own CSS
+        -- (see e.g. morjard-phone's DESIGN_SPEC_V3.md), but anything
+        -- reading the shared theme through this export got green instead
+        -- -- confirmed live on morjard-multicharacter's character-select
+        -- screen (status dot/ACTIVE text rendered emerald, not orange).
+        -- Now matches Ember's --accent exactly, so the whole suite is one
+        -- consistent identity again, not a per-resource patchwork.
+        accent         = '#F97316',          -- Ember orange (was emerald green)
+        accentRgb      = '249, 115, 22',
+        accentAlt      = '#FBBF24',           -- Ember gold (was a different orange, #ff9a1f)
+        accentAltRgb   = '251, 191, 36',
         secondary      = '#3b82f6',           -- blue
         bgDark         = 'rgba(15, 20, 35, 0.65)',
         bgDarker       = 'rgba(15, 20, 35, 0.95)',

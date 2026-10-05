@@ -333,6 +333,9 @@ RegisterNetEvent('morjard_target:removeEntity', api.removeEntity)
 ---@type table<number, OxTargetOption[]>
 local localEntities = {}
 
+---@type OxTargetOption[]
+local global = {}
+
 ---@param arr number | number[]
 ---@param options OxTargetOption | OxTargetOption[]
 function api.addLocalEntity(arr, options)
@@ -423,7 +426,7 @@ end
 
 ---@param resource string
 AddEventHandler('onClientResourceStop', function(resource)
-    removeResourceGlobals(resource, { peds, vehicles, objects, players })
+    removeResourceGlobals(resource, { peds, vehicles, objects, players, global })
     removeResourceTargets(resource, { models, entities, localEntities })
 
     if Zones then
@@ -481,9 +484,6 @@ function options_mt:set(entity, _type, model)
     if self.entity then options_mt.size += 1 end
     if self.localEntity then options_mt.size += 1 end
 end
-
----@type OxTargetOption[]
-local global = {}
 
 ---@param options OxTargetOption | OxTargetOption[]
 function api.addGlobalOption(options)

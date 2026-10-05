@@ -646,6 +646,29 @@ end
 -- HTTP Handler
 ---------------------------------------------------------------------------
 
+-- Optional IP allowlist (opt-in, defence-in-depth over the API key).
+-- Enabled by `set mcp_ip_allowlist "1.2.3.4,5.6.7.8"` in server.cfg. When the
+-- convar is empty (default), every authenticated request is accepted — i.e.
+-- no behaviour change from before this patch. Set `set mcp_ip_allowlist_log 1`
+-- to log the raw request addresses the server sees before you lock the list
+-- down (helpful because FXServer exposes the client address under either
+-- `req.address` or `X-Forwarded-For` depending on build/proxy setup).
+local function parseAllowlist(raw)
+    local out = {}
+    for ip in tostring(raw or ''):gmatch('[^,%s]+') do out[ip] = true end
+    return out
+end
+
+local function requestAddress(req)
+    -- Try every known shape FXServer HTTP handlers have exposed over the years:
+    --   `req.address` is current (as of b3570), older builds used `req.ip`,
+    --   and a trusted upstream proxy populates `X-Forwarded-For`.
+    local a = req.address or req.ip
+    local xff = req.headers and (req.headers['X-Forwarded-For'] or req.headers['x-forwarded-for'])
+    if xff then a = xff:match('^[^,%s]+') or a end
+    return tostring(a or ''):match('^[%d%.]+') or tostring(a or '')
+end
+
 SetHttpHandler(function(req, res)
     -- Fail closed. This connector exposes administrative and code-execution
     -- endpoints, so an omitted key must never turn authentication off.
@@ -654,6 +677,24 @@ SetHttpHandler(function(req, res)
         res.writeHead(503, { ['Content-Type'] = 'application/json' })
         res.send(json.encode({ error = 'Connector disabled: mcp_api_key is not configured' }))
         return
+    end
+
+    local allowlistRaw = GetConvar('mcp_ip_allowlist', '')
+    if allowlistRaw ~= '' then
+        local addr = requestAddress(req)
+        local allowed = parseAllowlist(allowlistRaw)
+        if not allowed[addr] then
+            if GetConvar('mcp_ip_allowlist_log', '0') ~= '0' then
+                print(('[morjard-connector] rejected %s %s from %s (not in allowlist)'):format(req.method or 'GET', req.path or '/', addr))
+            end
+            res.writeHead(403, { ['Content-Type'] = 'application/json' })
+            res.send(json.encode({ error = 'Forbidden (IP not in allowlist)' }))
+            return
+        end
+    elseif GetConvar('mcp_ip_allowlist_log', '0') ~= '0' then
+        -- Discovery mode: no allowlist set, but the operator wants to see what
+        -- source addresses look like before configuring one.
+        print(('[morjard-connector] accepting %s %s from %s'):format(req.method or 'GET', req.path or '/', requestAddress(req)))
     end
 
     local reqKey = req.headers['X-MCP-Key'] or req.headers['x-mcp-key'] or ''

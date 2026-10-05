@@ -801,20 +801,24 @@ end
 local zombieActive   = false
 local spawnedZombies = {}
 
+-- 6 oversized zombie peds (6.7-16 MiB .ytd each) disabled on 2026-10-05
+-- to avoid streaming bloat. .ytd files remain on disk under stream/zombie_peds/
+-- but these models are no longer spawned, so clients don't request them.
+-- Re-enable individually after re-encoding the texture dictionaries to BC7/DXT5.
 local ZOMBIE_MODELS = {
     "a_f_y_juggalo_01",
     "a_m_m_beach_01",
     "a_m_m_eastsa_02",
-    "a_m_m_farmer_01",
+    -- "a_m_m_farmer_01",   -- oversized .ytd (12.8 MiB)
     "a_m_m_fatlatin_01",
     "a_m_m_hillbilly_01",
-    "a_m_m_malibu_01",
+    -- "a_m_m_malibu_01",   -- oversized .ytd (6.7 MiB)
     "a_m_m_mexlabor_01",
     "a_m_m_og_boss_01",
     "a_m_m_polynesian_01",
-    "a_m_m_rurmeth_01",
+    -- "a_m_m_rurmeth_01",  -- oversized .ytd (15.9 MiB)
     "a_m_m_salton_02",
-    "a_m_m_skater_01",
+    -- "a_m_m_skater_01",   -- oversized .ytd (9.4 MiB)
     "a_m_m_skidrow_01",
     "a_m_m_soucent_04",
     "a_m_m_tennis_01",
@@ -822,8 +826,8 @@ local ZOMBIE_MODELS = {
     "a_m_y_genstreet_01",
     "a_m_y_genstreet_02",
     "a_m_y_methhead_01",
-    "a_m_y_salton_01",
-    "a_m_y_stlat_01",
+    -- "a_m_y_salton_01",   -- oversized .ytd (13.4 MiB)
+    -- "a_m_y_stlat_01",    -- oversized .ytd (13.8 MiB)
     "csb_agent",
     "s_m_y_cop_01",
     "s_m_y_prismuscl_01",
@@ -1121,6 +1125,18 @@ CreateThread(function()
                 SendNUIMessage({ action='eventStopped' })
             end
         end
+    end
+end)
+
+-- Release NUI focus if the resource is stopped while the admin menu or
+-- the player tablet is open -- without this the player is locked with a
+-- visible cursor and no gameplay input until they relog.
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    if menuOpen or playerTabletOpen then
+        menuOpen = false
+        playerTabletOpen = false
+        SetNuiFocus(false, false)
     end
 end)
 

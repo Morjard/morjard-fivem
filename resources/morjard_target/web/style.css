@@ -2,17 +2,40 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
 
 :root {
-  --border-radius: 8px;
+  /* Ember house style tokens */
+  --accent:       #F97316;
+  --accent2:      #FBBF24;
+  --accent-glow:  rgba(249,115,22,0.35);
+  --accent-dim:   rgba(249,115,22,0.12);
+  --danger:       #EF4444;
+  --warn:         #FBBF24;
+  --bg:           #060504;
+  --bg2:          rgba(15,13,11,0.35);
+  --bg3:          rgba(26,23,20,0.28);
+  --border:       rgba(249,115,22,0.18);
+  --borderB:      rgba(249,115,22,0.45);
+  --text:         #FAFAF9;
+  --text-dim:     rgba(168,162,158,0.7);
+  --text-bright:  #ffffff;
+  --mono:         'JetBrains Mono', monospace;
+  --main:         'Inter', sans-serif;
+  --display:      'Space Grotesk', sans-serif;
+  --glass:        rgba(15,13,11,0.85);
+  --glass-border: rgba(249,115,22,0.22);
+  --radius:       0px;
+  --transition:   0.25s ease;
+
+  --border-radius: 0px;
   --option-height: 30px;
 
-  --primary-color: #00d4aa;
-  --primary-glow: rgba(0, 212, 170, 0.4);
-  --bg-color: rgba(10, 14, 23, 0.92);
-  --bg-hover: rgba(0, 212, 170, 0.15);
-  --text-color: #f8fafc;
-  --text-secondary: #9ca3af;
-  --border-color: rgba(0, 212, 170, 0.25);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --primary-color: #F97316;
+  --primary-glow: rgba(249, 115, 22, 0.4);
+  --bg-color: rgba(15, 13, 11, 0.92);
+  --bg-hover: rgba(249, 115, 22, 0.08);
+  --text-color: #FAFAF9;
+  --text-secondary: rgba(168, 162, 158, 0.7);
+  --border-color: rgba(249, 115, 22, 0.25);
+  --shadow: 0 0 60px rgba(0, 0, 0, 0.5), inset 0 8px 24px rgba(249, 115, 22, 0.03);
 }
 
 body[data-theme="red"] {

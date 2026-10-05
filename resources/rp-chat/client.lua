@@ -165,6 +165,17 @@ end)
 
 -- Send message to NUI
 local function AddMessage(msg)
+    -- Confirmed live (2026-10-04): a received chat message's toast/notif
+    -- rendered on top of morjard-multicharacter's character-select screen,
+    -- same overlap class as the morjard-hud bleed-through fixed earlier
+    -- this session. This resource has no IsPlayerPlaying-style gate at
+    -- all; pcall-wrapped so it's safe if morjard-multicharacter isn't
+    -- running (matches the guard pattern added to morjard-hud).
+    local ok, selectionOpen = pcall(function()
+        return exports['morjard-multicharacter']:IsSelectionOpen()
+    end)
+    if ok and selectionOpen then return end
+
     if msg.serverId and avatarCache[msg.serverId] then
         msg.avatarUrl = avatarCache[msg.serverId]
     end
@@ -174,21 +185,37 @@ local function AddMessage(msg)
     })
 end
 
--- Register keybind
+-- Register keybind — T opens chat clean, / opens chat with a slash prefilled
+-- (matches the vanilla FiveM chat UX the user expects). Both are registered
+-- as separate +/- key-mapped commands so FiveM's key-up/down dispatcher
+-- doesn't get confused when the two bindings share handlers.
 RegisterCommand('+' .. Config.OpenKeyCommand, function()
     if not isFocused then
         OpenChat()
     end
 end, false)
-
 RegisterCommand('-' .. Config.OpenKeyCommand, function() end, false)
 RegisterKeyMapping('+' .. Config.OpenKeyCommand, 'Open Chat', 'keyboard', Config.OpenKey)
 
--- Chat commands registration
-RegisterCommand('chatOpen', function(source, args)
+RegisterCommand('+chatOpenSlash', function()
+    if not isFocused then
+        OpenChat('/')
+    end
+end, false)
+RegisterCommand('-chatOpenSlash', function() end, false)
+RegisterKeyMapping('+chatOpenSlash', 'Open Chat (Command)', 'keyboard', 'SLASH')
+
+-- Plain, non-prefixed commands so the dev console / devcon can open chat
+-- reliably. `+chatOpen` above is a key-mapping command (invoked by key
+-- events only), so typing `chatOpen` in F8 hits THIS handler, and `rpchat`
+-- is a short unambiguous alias so there's no confusion with any other
+-- resource that may register its own `chatOpen`.
+local function OpenChatFromConsole(_, args)
     local prefill = args[1] and ('/' .. table.concat(args, ' ')) or ''
     OpenChat(prefill)
-end, false)
+end
+RegisterCommand('chatOpen', OpenChatFromConsole, false)
+RegisterCommand('rpchat', OpenChatFromConsole, false)
 
 -- NUI Callbacks
 RegisterNUICallback('chatClosed', function(data, cb)
@@ -394,6 +421,18 @@ end
 RegisterNetEvent('rp-chat:notify')
 AddEventHandler('rp-chat:notify', function(notifyType, title, message)
     Notify(notifyType, title, message)
+end)
+
+-- Release NUI focus if the resource is stopped while the chat is open --
+-- without this, a /ensure rp-chat during a /restart leaves the player
+-- stuck with the cursor on screen and no gameplay input until relog.
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    if isOpen or isFocused then
+        isOpen = false
+        isFocused = false
+        SetNuiFocus(false, false)
+    end
 end)
 
 -- Exports
