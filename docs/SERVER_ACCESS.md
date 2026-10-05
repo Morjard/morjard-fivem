@@ -94,6 +94,8 @@ sshpass ... "sudo ls -1t .../logs/fxserver*.log | head -3"
 |------|----------|
 | `io.open(path, "r")` v scope `morjard-connector` | ✅ |
 | `io.open(GetResourcePath('other-resource')..'/...', 'r')` | ✅ (čtení) |
+| `io.open(..., "w")` + `w:write(...)` pro **vlastní resource** | ✅ |
+| `io.open(..., "w")` + `w:write(...)` pro **jiný resource** | ❌ **TICHÝ FAIL** — vrátí success, soubor zůstane nezměněn (verified 2026-10-05 na hydra/server.js) |
 | `GetResourcePath(name)` | ✅ |
 | `GetConvar(key, default)` | ✅ |
 | `ExecuteCommand("refresh")`, `ExecuteCommand("ensure NAME")` | ✅ |
@@ -106,7 +108,10 @@ sshpass ... "sudo ls -1t .../logs/fxserver*.log | head -3"
 
 ### Verifikace deploye
 
-**"restart nevyhodil SCRIPT ERROR" ≠ "deploy je live"** — vždy čti source přímo přes exec-lua:
+**"restart nevyhodil SCRIPT ERROR" ≠ "deploy je live"** — vždy čti source přímo přes exec-lua.
+**"exec-lua write řekl ok" ≠ "soubor je skutečně změněn"** — immediately re-read a porovnej. Mimo vlastní resource silently failuje (viz tabulka).
+
+Příklad:
 
 ```lua
 local f = io.open(GetResourcePath('morjard-bridge') .. '/server/bridge.lua', 'r')
