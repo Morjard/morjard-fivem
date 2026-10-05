@@ -12,6 +12,9 @@ Jak sahat na server, co kam patří, jak nasazovat.
 
 `tebex-suite/` je **vlastní git submodule** (má svůj .git). Commituj v něm separately.
 
+**Výjimky (ověřeno 2026-10-05):** `morjard-connector` a `morjard_target` běží z **kořene** `resources/`, ne z `[morjard]`. Před každým deployem zjisti skutečnou cestu:
+`ExecuteCommand`-free check přes exec-lua: `return GetResourcePath('<name>')`. Rsync na špatnou cestu vytvoří tichou duplicitu (FXServer načte první nalezenou a změna „není nasazená“). Známé staré duplicity: `[standalone]/morjard-biography`, `[morjard-suite]/morjard-consumables`.
+
 ## GitHub
 
 - `github.com/Morjard/morjard-fivem` — hlavní FiveM repo (master = jediná branch)
