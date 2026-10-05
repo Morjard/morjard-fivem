@@ -240,3 +240,24 @@ Používat když se nechci zahltit sám (např. 20min web lookup, 50-file audit 
 - **Relativní URL v CSS proměnné nastavené z JS** se resolvuje vůči stylesheetu, ne stránce → v NUI používej absolutní `/html/...` (morjard-phone tapety).
 - **WmAgent `/input/mouse`**: `drag` bere `x,y,toX,toY`; double-click = `click` s `count:2`. `/input/keyboard {"key":"1"}` se do hry nedostal — herní zkratky testuj přes DevCon příkaz (`slot_1`, `phone`, `morjardinv`).
 - **Testovací předměty**: exec-lua `exports['qb-inventory']:AddItem(src, 'bandage', 5, false, false, 'devtest')`.
+
+## 9. mj-smoketest
+
+`~/bin/mj-smoketest` (Python 3, requests + Pillow) projde všechna NUI, která jdou otevřít bez fyzické blízkosti: otevře → počká → screenshot přes WmAgent → zavře. Pak stáhne celý nejnovější `CitizenFX_log_*.log` a vypíše chyby vzniklé během běhu (`SCRIPT ERROR|Uncaught|TypeError|ReferenceError|SyntaxError|[ERROR]`, od markeru `mj-smoketest-<timestamp>` vytištěného přes exec-lua).
+
+Předpoklady: běžící FiveM na WarMachine připojený na dev server, SSH tunel na WmAgent (3.1), `MJ_MCP_KEY` = X-MCP-Key pro morjard-connector.
+
+```bash
+export MJ_MCP_KEY=...                       # povinné
+mj-smoketest --list                         # testy + seznam přeskočených pluginů s důvodem
+mj-smoketest --dry-run                      # jen plán, nic nevolá
+mj-smoketest                                # celý běh -> /tmp/mj-smoketest/<timestamp>/
+mj-smoketest --only phone,bank,inv          # podmnožina (substring jména)
+mj-smoketest --server-log-cmd "ssh ubuntu@57.129.114.181 -p 64337 'tail -n 2000 <cesta k server logu>'"
+```
+
+- Výstup: `<name>.png` pro každý test, `contact.png` (mřížka náhledů, červený popisek = neotevřelo/nezavřelo), `report.json`. Exit 1 při jakékoli chybě (open fail, zaseknutý focus, chyba v client/server logu).
+- Seznam testů: `docs/smoketest.json` (`tests` = `{name, open, close, wait, expect_focus, requires}`, `_skipped` = plugin → důvod). Akce: `devcon`, `client_lua`, `server_lua`, `key` (WmAgent `/input/keyboard`), `sleep`; `"if_focused": true` = jen když `IsNuiFocused()`.
+- Zavírání: výchozí je ESC (jen když nějaké NUI drží focus, jinak by ESC otevřel pause menu) + `SetNuiFocus(false,false)`. NUI focus je per-resource, takže zavřít musí ESC handler pluginu; sloupec `closed=STUCK` = plugin nemá ESC handler nebo nefunguje.
+- Sloupec `nui=NO` u testů s `requires` (admin/policie/předmět) obvykle znamená jen chybějící oprávnění, ne bug.
+- `--server-log-cmd`: stdout příkazu se zachytí před a po běhu; hlásí se jen nové řádky s `SCRIPT ERROR|error`. Na OVH jen čtení (viz pravidla o sdíleném hostu).
